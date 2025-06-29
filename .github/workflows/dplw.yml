@@ -1,0 +1,31 @@
+name: My workflow W
+on: [workflow_dispatch]
+
+jobs:
+  job:
+    name: My Job
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: ${{ secrets.RCLONE_CONFIG }}
+
+      - name: Sync
+        run: rclone sync cloud:tokens ./tokens
+
+      - uses: AnimMouse/setup-ffmpeg@v1
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Environment
+        run: |
+          echo "${{ secrets.ENV }}" | base64 -d > .env
+
+      - name: Bun
+        run: bun install;bun run .

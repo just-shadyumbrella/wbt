@@ -1,0 +1,17 @@
+name: SI
+on: [workflow_dispatch]
+jobs:
+  test:
+    name: SI ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Bun
+        run: bunx systeminformation
