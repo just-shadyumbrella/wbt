@@ -1,6 +1,6 @@
 {
   "name": "wbt",
-  "version": "0.0.1",
+  "version": "0.1.2-alpha",
   "description": "WAB WAb Wab wab",
   "type": "module",
   "main": "index.ts",

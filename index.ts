@@ -2,7 +2,7 @@ import pkg from 'whatsapp-web.js'
 const { Client, LocalAuth } = pkg
 import qrcode from 'qrcode-terminal'
 import { chromePath, logger, LoggerType, parseArguments } from './src/util.js'
-import { Commands, commands } from './src/commands.js'
+import commands from './src/commands.js'
 
 /* CONSTANTS */
 
@@ -10,6 +10,7 @@ const client = new Client({
   authStrategy: new LocalAuth(),
   userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15',
   puppeteer: {
+    headless: false,
     executablePath: chromePath(),
     timeout: 0, // Most runners issue
     args: ['--no-sandbox', '--disable-encryption', '--disable-machine-id'],
@@ -39,7 +40,7 @@ client.on('message_create', async (message) => {
   const [command, params] = parsed
   if (Object.hasOwn(commands, command)) {
     try {
-      await (commands[command] as Commands).handler(message, params)
+      await commands[command].handler(message, params)
     } catch (err) {
       logger(LoggerType.ERROR, `index:client?message_create=\$${command}`, err, 'Params:', err)
     }

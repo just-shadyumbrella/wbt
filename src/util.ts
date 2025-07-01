@@ -1,9 +1,98 @@
 import fs from 'node:fs'
 import chalk from 'chalk'
+import si from 'systeminformation'
 import WAWebJS from 'whatsapp-web.js'
 import { config } from 'dotenv'
+import path from 'node:path'
 
 config()
+
+/* CONSTANTS */
+console.log('Gathering `package.json`...')
+console.time('Package information stored')
+const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')).toString())
+const bun = process.versions.bun,
+  node = process.versions.node
+const versions = [
+  bun ? `Bun v${bun}` : undefined,
+  node ? `NodeJS v${node}` : undefined,
+  [pkg['name'], pkg['version']].join(' v'),
+].filter((e) => e !== undefined)
+console.timeEnd('Package information stored')
+
+export const PREFIX = process.env.PREFIX || '/'
+
+export const readMore = ` ${'\u{34f}'.repeat(1024 * 3)}`
+
+/**
+\\(⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)/
+
+(｡•́‿•̀｡)
+
+(｡^‿^｡)
+
+(//ω//)
+
+(≧◡≦)
+
+(>///<)
+ */
+export function blushReact(index?: number) {
+  const blush = ['\\(⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)/', '(｡•́‿•̀｡)', '(｡^‿^｡)', '(//ω//)', '(≧◡≦)', '(>///<)']
+  return blush[index || Math.floor(Math.random() * blush.length)]
+}
+
+/* SYSTEM INFO */
+console.log('Gathering system information...')
+console.time('System information stored')
+const system = await si.system()
+console.timeEnd('System information stored')
+console.log('Gathering OS information...')
+console.time('OS information stored')
+const osInfo = await si.osInfo()
+console.timeEnd('OS information stored')
+console.time('CPU information stored')
+const cpu = await si.cpu()
+console.timeEnd('CPU information stored')
+export async function sysinfo() {
+  const time = si.time()
+  console.log('Gathering memory information...')
+  console.time('Memory information gathered')
+  const mem = await si.mem()
+  console.timeEnd('Memory information gathered')
+  console.log('Gathering filesystem information...')
+  console.time('Filesystem information gathered')
+  const fsSize = await si.fsSize()
+  console.timeEnd('Filesystem information gathered')
+  return `*System Uptime:* ${new Date(time.uptime * 1000).toISOString().substr(11, 8)}
+*Runner:* ${system.manufacturer} ${system.model}${system.virtual ? ' (Virtualized)' : ''} ${system.version}
+*OS:* ${osInfo.distro} ${osInfo.release}${osInfo.codename ? ` "${osInfo.codename}"` : ''} (kernel: ${osInfo.kernel} ${
+    osInfo.arch
+  })
+*CPU:* ${cpu.manufacturer} ${cpu.brand} (${cpu.cores} cores available, up to ${cpu.speed} GHz)
+*Memory:* ${convertByteUnit(mem.used, 'GB')}/${convertByteUnit(mem.total, 'GB')} GB
+*Disk:* ${convertByteUnit(fsSize[0].used, 'GB')}/${convertByteUnit(fsSize[0].size, 'GB')} GB
+
+*💼 Project*${readMore}
+\`\`\`
+${JSON.stringify(pkg, null, 2)}
+\`\`\`
+
+> ${versions.join(' | ')}`
+}
+
+/* UTILS */
+
+export function convertByteUnit(bytes: number, unit: 'KB' | 'MB' | 'GB') {
+  const units = {
+    KB: 1024,
+    MB: 1024 * 1024,
+    GB: 1024 * 1024 * 1024,
+  }
+  const value = bytes / units[unit]
+  const result = Math.round(value * 100) / 100
+  return result
+}
 
 export enum LoggerType {
   LOG = 'log',
@@ -28,15 +117,13 @@ export function logger(type: LoggerType, module: string, ...data: any[]) {
       prefix = chalk.red('ERROR')
       break
   }
-  return console[type](`${prefix}`, `${leftAlignWithSpaces(`[${chalk.green(module)}]`)}:`, ...data)
+  return console[type](`${prefix}`, leftAlignWithSpaces(`[${chalk.green(module)}]`), ...data)
 }
 
 export function leftAlignWithSpaces(text: string, maxlength = 46) {
   const r = maxlength >= text.length ? maxlength - text.length : 0
   return `${text}${' '.repeat(r)}`
 }
-
-const PREFIX = process.env.PREFIX || '/'
 
 export function parseArguments(input: string): [string, string[]] | undefined {
   function processEscapes(str: string) {
@@ -86,6 +173,15 @@ export function parseArguments(input: string): [string, string[]] | undefined {
   }
 }
 
+function help(commandInstructions: string[], description: string) {
+  const formattedInstructions = commandInstructions.map((e) => `\`${e}\``)
+  return `💡 *Penggunaan*
+
+${formattedInstructions.join('\n')}
+
+${description}`
+}
+
 /* WA Utils */
 
 export function chromePath() {
@@ -102,8 +198,12 @@ export type GroupChat = WAWebJS.GroupChat & { client: WAWebJS.Client; lastMessag
 /**
  * If `client` property is unnecessarry
  */
-export async function chatFilter(chat: Chat | GroupChat) {
-  const { client, ...chatWithoutClient } = chat
-  const { client: lastClient, ...lastMessageWithoutClient } = chat.lastMessage
-  return { ...chatWithoutClient, lastMessage: lastMessageWithoutClient }
+export async function getChat(message: WAWebJS.Message, noClient = false) {
+  const chat = (await message.getChat()) as Chat | GroupChat
+  if (noClient) {
+    const { client, ...chatWithoutClient } = chat
+    const { client: lastClient, ...lastMessageWithoutClient } = chat.lastMessage
+    return { ...chatWithoutClient, lastMessage: lastMessageWithoutClient }
+  }
+  return chat
 }
