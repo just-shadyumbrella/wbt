@@ -43,16 +43,36 @@ export function blushReact(index?: number) {
 }
 
 /* SYSTEM INFO */
+const tmpDir = path.join(process.cwd(), '.tmp')
+if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
+
+async function loadOrCache<T>(filename: string, getter: () => Promise<T>): Promise<T> {
+  const filePath = path.join(tmpDir, filename)
+  if (fs.existsSync(filePath)) {
+    try {
+      const fileContent = await fs.promises.readFile(filePath, 'utf-8')
+      return JSON.parse(fileContent)
+    } catch (err) {
+      logger(LoggerType.WARN, `loadOrCache`, `Cannot load cache for \`${filename}\`:`, err)
+    }
+  }
+  const data = await getter()
+  await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2))
+  return data
+}
+
 console.log('Gathering system information...')
 console.time('System information stored')
-const system = await si.system()
+const system = await loadOrCache('system.json', si.system)
 console.timeEnd('System information stored')
+
 console.log('Gathering OS information...')
 console.time('OS information stored')
-const osInfo = await si.osInfo()
+const osInfo = await loadOrCache('osInfo.json', si.osInfo)
 console.timeEnd('OS information stored')
+
 console.time('CPU information stored')
-const cpu = await si.cpu()
+const cpu = await loadOrCache('cpu.json', si.cpu)
 console.timeEnd('CPU information stored')
 export async function sysinfo() {
   const time = si.time()
@@ -120,12 +140,12 @@ export function logger(type: LoggerType, module: string, ...data: any[]) {
   return console[type](`${prefix}`, leftAlignWithSpaces(`[${chalk.green(module)}]`), ...data)
 }
 
-export function leftAlignWithSpaces(text: string, maxlength = 46) {
+export function leftAlignWithSpaces(text: string, maxlength = 42 ) {
   const r = maxlength >= text.length ? maxlength - text.length : 0
   return `${text}${' '.repeat(r)}`
 }
 
-export function parseArguments(input: string): [string, string[]] | undefined {
+export function parseArguments(input: string) {
   function processEscapes(str: string) {
     // Replace escaped quotes with regular quotes
     return str.replace(/\\"/g, '"')
@@ -168,18 +188,13 @@ export function parseArguments(input: string): [string, string[]] | undefined {
   }
   const command = result[0]
   if (command && command.startsWith(PREFIX)) {
-    result.shift()
-    return [command.replace(PREFIX, ''), result]
+    return result
   }
 }
 
-function help(commandInstructions: string[], description: string) {
+export function useHelp(commandInstructions: string[], description?: string) {
   const formattedInstructions = commandInstructions.map((e) => `\`${e}\``)
-  return `💡 *Penggunaan*
-
-${formattedInstructions.join('\n')}
-
-${description}`
+  return `💡 *Penggunaan*\n\n${formattedInstructions.join('\n')}${description ? `\n\n${description}` : ''}`
 }
 
 /* WA Utils */

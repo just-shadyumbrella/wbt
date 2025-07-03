@@ -1,16 +1,17 @@
-import pkg from 'whatsapp-web.js'
-const { Client, LocalAuth } = pkg
+import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
-import { chromePath, logger, LoggerType, parseArguments } from './src/util.js'
+import { chromePath, logger, LoggerType, parseArguments, PREFIX } from './src/util.js'
 import commands from './src/commands.js'
 
-/* CONSTANTS */
+const arg = process.argv[2]
+if (arg === 'debug') console.log('Debug mode enabled.')
 
-const client = new Client({
-  authStrategy: new LocalAuth(),
-  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Safari/605.1.15',
+const client = new WAWebJS.Client({
+  authStrategy: new WAWebJS.LocalAuth(),
+  userAgent:
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   puppeteer: {
-    headless: false,
+    headless: arg === 'debug' ? false : true,
     executablePath: chromePath(),
     timeout: 0, // Most runners issue
     args: ['--no-sandbox', '--disable-encryption', '--disable-machine-id'],
@@ -19,7 +20,12 @@ const client = new Client({
 
 client.on('auth_failure', (message) => logger(LoggerType.ERROR, 'index:client?auth_failure', message))
 client.on('authenticated', () => logger(LoggerType.LOG, 'index:client?authenticated', 'Client authenticated.'))
-client.on('disconnected', (message) => logger(LoggerType.WARN, 'index:client?disconnected', `Client \`${message}\``))
+client.on('disconnected', (message) => {
+  logger(LoggerType.WARN, 'index:client?disconnected', `Client ${message.toLocaleLowerCase()}.`)
+  if (message === 'LOGOUT') {
+    client.initialize()
+  }
+})
 client.on('loading_screen', (message) =>
   logger(LoggerType.LOG, 'index:client?loading_screen', `Client loading ${message}%`)
 )
@@ -35,16 +41,47 @@ client.on('qr', (qr) => {
 })
 
 client.on('message_create', async (message) => {
-  const parsed = parseArguments(message.body)
-  if (!parsed) return
-  const [command, params] = parsed
-  if (Object.hasOwn(commands, command)) {
-    try {
-      await commands[command].handler(message, params)
-    } catch (err) {
-      logger(LoggerType.ERROR, `index:client?message_create=\$${command}`, err, 'Params:', err)
+  const params = parseArguments(message.body)
+  if (params) {
+    const command = params[0].replace(PREFIX, '')
+    if (Object.hasOwn(commands, command)) {
+      try {
+        const now = Date.now()
+        const chat = await message.getChat()
+        chat.sendStateTyping()
+        await commands[command].handler(message, params)
+        logger(
+          LoggerType.LOG,
+          `index:client?message_create=\$${command}`,
+          'Request handled:',
+          `${(Date.now() - now) / 1000}s`
+        )
+      } catch (err) {
+        logger(LoggerType.ERROR, `index:client?message_create=\$${command}`, err, 'Params:', params)
+      }
     }
   }
 })
 
-client.initialize()
+async function main() {
+  const maxRetries = 5
+  const retryDelay = 5000
+  for (let i = 0; i < maxRetries; i++) {
+    logger(LoggerType.INFO, 'index:client?initialize', `Client initializing... (Attempt ${i + 1}/${maxRetries})`)
+    try {
+      await client.initialize()
+      return // Success, exit the function
+    } catch (err) {
+      logger(LoggerType.ERROR, 'index:client?initialize', err)
+      if (i < maxRetries - 1) {
+        logger(LoggerType.WARN, 'index:client?initialize', `Attempting to restart client in ${retryDelay / 1000}s...`)
+        await new Promise((resolve) => setTimeout(resolve, retryDelay))
+      } else {
+        logger(LoggerType.ERROR, 'index:client?initialize', 'Max retry attempts reached. Could not initialize client.')
+      }
+    }
+  }
+}
+
+main()
+setTimeout(client.destroy, 5 * 60 * 60 * 1000 + 50 * 60 * 1000) // Maximum 5:50
