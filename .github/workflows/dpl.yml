@@ -1,7 +1,7 @@
 name: My workflow M
 on:
+  # push:
   workflow_dispatch:
-  push:
   schedule:
     - cron: 0 */6 * * *
 

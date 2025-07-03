@@ -1,6 +1,7 @@
 name: Push Auth
 on:
   workflow_dispatch:
+  push:
 
 concurrency:
   group: wbt
@@ -32,4 +33,4 @@ jobs:
         run: bun install;bun run . pushauth
         
       - name: Sync
-        run: rclone delete cloud:tokens;rclone sync ./tokens cloud:tokens -P
+        run: tree ./tokens;rclone delete cloud:tokens;rclone sync ./tokens cloud:tokens -P;rclone tree cloud:tokens

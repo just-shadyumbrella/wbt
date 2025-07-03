@@ -37,8 +37,10 @@ client.on('ready', async () => {
   logger(LoggerType.INFO, 'index:client?ready', `Client ready.`)
   if (arg === 'pushauth') {
     logger(LoggerType.WARN, 'index:client?ready', 'Push auth mode, exiting...')
-    await client.destroy()
-    process.exit(0)
+    setTimeout(async() => {
+      await client.destroy()
+      process.exit(0)
+    }, 10000);
   }
 })
 client.on('remote_session_saved', (message) =>
