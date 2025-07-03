@@ -3,7 +3,7 @@ import qrcode from 'qrcode-terminal'
 import { chromePath, logger, LoggerType, parseArguments, PREFIX } from './src/util.js'
 import commands from './src/commands.js'
 
-export const arg = process.argv[2]
+const arg = process.argv[2]
 if (arg === 'debug') logger(LoggerType.WARN, 'debug', 'Debug mode enabled. Unhide browser window and skip some prefetch.')
 if (arg === 'pushauth')
   logger(LoggerType.WARN, 'pushauth', 'Push browser profile to cloud, automatically exit on ready.')

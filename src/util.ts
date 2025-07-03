@@ -4,8 +4,8 @@ import si from 'systeminformation'
 import WAWebJS from 'whatsapp-web.js'
 import { config } from 'dotenv'
 import path from 'node:path'
-import { arg } from '../index.js'
 
+const arg = process.argv[2]
 chalk.level = 1
 config()
 
@@ -87,7 +87,6 @@ export async function sysinfo() {
 \`\`\`
 ${JSON.stringify(pkg, null, 2)}
 \`\`\`
-
 > ${versions.join(' | ')}`
 }
 
