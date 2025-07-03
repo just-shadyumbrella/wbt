@@ -1,9 +1,9 @@
-name: Purge Auth
+name: Push Auth
 on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: wbt
   cancel-in-progress: true
 
 jobs:

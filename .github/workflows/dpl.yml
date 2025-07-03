@@ -6,7 +6,7 @@ on:
     - cron: 0 */6 * * *
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: wbt
   cancel-in-progress: true
 
 jobs:

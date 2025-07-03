@@ -4,8 +4,9 @@ import { chromePath, logger, LoggerType, parseArguments, PREFIX } from './src/ut
 import commands from './src/commands.js'
 
 const arg = process.argv[2]
-if (arg === 'debug') console.log('Debug mode enabled.\n')
-if (arg === 'pushauth') console.log('Push puppeteer profile to cloud, automatically exit on authenticated.\n')
+if (arg === 'debug') logger(LoggerType.WARN, 'debug', 'Debug mode enabled.')
+if (arg === 'pushauth')
+  logger(LoggerType.WARN, 'pushauth', 'Push puppeteer profile to cloud, automatically exit on ready.')
 
 const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
@@ -32,10 +33,11 @@ client.on('disconnected', (message) => {
 client.on('loading_screen', (message) =>
   logger(LoggerType.LOG, 'index:client?loading_screen', `Client loading ${message}%`)
 )
-client.on('ready', () => {
+client.on('ready', async () => {
   logger(LoggerType.INFO, 'index:client?ready', `Client ready.`)
   if (arg === 'pushauth') {
-    console.log('Push auth mode, exiting...')
+    logger(LoggerType.WARN, 'index:client?ready', 'Push auth mode, exiting...')
+    await client.destroy()
     process.exit(0)
   }
 })
