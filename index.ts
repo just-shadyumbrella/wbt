@@ -25,7 +25,7 @@ client.on('authenticated', () => logger(LoggerType.LOG, 'index:client?authentica
 client.on('disconnected', (message) => {
   logger(LoggerType.WARN, 'index:client?disconnected', `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
-    client.initialize()
+    main()
   }
 })
 client.on('loading_screen', (message) =>
@@ -80,6 +80,7 @@ async function main() {
     } catch (err) {
       logger(LoggerType.ERROR, 'index:client?initialize', err)
       if (i < maxRetries - 1) {
+        client.destroy()
         logger(LoggerType.WARN, 'index:client?initialize', `Attempting to restart client in ${retryDelay / 1000}s...`)
         await new Promise((resolve) => setTimeout(resolve, retryDelay))
       } else {
