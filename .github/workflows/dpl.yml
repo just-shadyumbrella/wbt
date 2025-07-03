@@ -22,7 +22,7 @@ jobs:
           rclone_config: ${{ secrets.RCLONE_CONFIG }}
 
       - name: Sync
-        run: rclone sync cloud:tokens ./tokens
+        run: rclone sync cloud:tokens ./tokens;tree ./tokens
 
       - uses: AnimMouse/setup-ffmpeg@v1
 
