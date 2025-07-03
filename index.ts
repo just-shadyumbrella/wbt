@@ -4,10 +4,12 @@ import { chromePath, logger, LoggerType, parseArguments, PREFIX } from './src/ut
 import commands from './src/commands.js'
 
 const arg = process.argv[2]
-if (arg === 'debug') console.log('Debug mode enabled.')
+if (arg === 'debug') console.log('Debug mode enabled.\n')
 
 const client = new WAWebJS.Client({
-  authStrategy: new WAWebJS.LocalAuth(),
+  authStrategy: new WAWebJS.LocalAuth({
+    dataPath: './tokens',
+  }),
   userAgent:
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   puppeteer: {
@@ -67,7 +69,11 @@ async function main() {
   const maxRetries = 5
   const retryDelay = 5000
   for (let i = 0; i < maxRetries; i++) {
-    logger(LoggerType.INFO, 'index:client?initialize', `Client initializing... (Attempt ${i + 1}/${maxRetries})`)
+    logger(
+      LoggerType.INFO,
+      'index:client?initialize',
+      `Client initializing...${i > 0 ? ` (Attempt ${i + 1}/${maxRetries})` : ''}`
+    )
     try {
       await client.initialize()
       return // Success, exit the function
@@ -78,10 +84,14 @@ async function main() {
         await new Promise((resolve) => setTimeout(resolve, retryDelay))
       } else {
         logger(LoggerType.ERROR, 'index:client?initialize', 'Max retry attempts reached. Could not initialize client.')
+        process.exit(1)
       }
     }
   }
 }
 
 main()
-setTimeout(client.destroy, 5 * 60 * 60 * 1000 + 50 * 60 * 1000) // Maximum 5:50
+setTimeout(async () => {
+  await client.destroy()
+  process.exit(0)
+}, 5 * 60 * 60 * 1000 + 50 * 60 * 1000) // Maximum 5:50
