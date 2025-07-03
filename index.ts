@@ -22,13 +22,7 @@ const client = new WAWebJS.Client({
 })
 
 client.on('auth_failure', (message) => logger(LoggerType.ERROR, 'index:client?auth_failure', message))
-client.on('authenticated', () => {
-  logger(LoggerType.INFO, 'index:client?authenticated', `Client authenticated.`)
-  if (arg === 'pushauth') {
-    console.log('Push auth mode, exiting...')
-    process.exit(0)
-  }
-})
+client.on('authenticated', () => logger(LoggerType.INFO, 'index:client?authenticated', `Client authenticated.`))
 client.on('disconnected', (message) => {
   logger(LoggerType.WARN, 'index:client?disconnected', `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
@@ -38,7 +32,13 @@ client.on('disconnected', (message) => {
 client.on('loading_screen', (message) =>
   logger(LoggerType.LOG, 'index:client?loading_screen', `Client loading ${message}%`)
 )
-client.on('ready', () => logger(LoggerType.INFO, 'index:client?ready', `Client ready.`))
+client.on('ready', () => {
+  logger(LoggerType.INFO, 'index:client?ready', `Client ready.`)
+  if (arg === 'pushauth') {
+    console.log('Push auth mode, exiting...')
+    process.exit(0)
+  }
+})
 client.on('remote_session_saved', (message) =>
   logger(LoggerType.LOG, 'index:client?remote_session_saved', `Client remote session saved`, message)
 )

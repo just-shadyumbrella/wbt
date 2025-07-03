@@ -101,8 +101,6 @@ const WBT = {
   },
 }
 
-console.log('Preparing commands...')
-console.time('Commands prepared')
 let help = `*Info penggunaan cukup kirim perintah tanpa argumen, atau \`${PREFIX}[perintah] help\`. Beberapa perintah dapat digunakan tanpa argumen.*\n\n> 👑 Hanya Admin\n`
 let commands: Record<string, (typeof WBT)['Menu Utama']['start']> = {}
 for (const menu in WBT) {
@@ -113,6 +111,5 @@ for (const menu in WBT) {
   }
   help += `\n*🔰 ${menu}*\n${menu_command_list.join('\n')}\n`
 }
-console.timeEnd('Commands prepared')
 
 export default commands
