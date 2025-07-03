@@ -1,4 +1,4 @@
-name: My workflow M
+name: My workflow
 on:
   # push:
   workflow_dispatch:
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   job:
     name: My Job
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
