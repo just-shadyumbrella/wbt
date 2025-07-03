@@ -40,7 +40,7 @@ client.on('ready', async () => {
     setTimeout(async() => {
       await client.destroy()
       process.exit(0)
-    }, 10000);
+    }, 30000);
   }
 })
 client.on('remote_session_saved', (message) =>
