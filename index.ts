@@ -27,7 +27,8 @@ client.on('authenticated', () => logger(LoggerType.INFO, 'index:client?authentic
 client.on('disconnected', (message) => {
   logger(LoggerType.WARN, 'index:client?disconnected', `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
-    main()
+    logger(LoggerType.INFO, 'client?initialize', 'Reinitializing client...')
+    client.initialize().catch((_) => _) // Fixes
   }
 })
 client.on('loading_screen', (message) =>
@@ -76,33 +77,9 @@ client.on('message_create', async (message) => {
   }
 })
 
-async function main() {
-  const maxRetries = 5
-  const retryDelay = 5000
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      logger(
-        LoggerType.INFO,
-        'index:client?initialize',
-        `Client initializing...${i > 0 ? ` (Attempt ${i + 1}/${maxRetries})` : ''}`
-      )
-      await client.initialize().catch(_ => _) // Fixes
-      // return // Success, exit the function
-    } catch (err) {
-      logger(LoggerType.ERROR, 'index:client?initialize', err)
-      if (i < maxRetries - 1) {
-        client.destroy()
-        logger(LoggerType.WARN, 'index:client?initialize', `Attempting to restart client in ${retryDelay / 1000}s...`)
-        await new Promise((resolve) => setTimeout(resolve, retryDelay))
-      } else {
-        logger(LoggerType.ERROR, 'index:client?initialize', 'Reached maximum retries. Could not initialize client.')
-        process.exit(1)
-      }
-    }
-  }
-}
+logger(LoggerType.INFO, 'client?initialize', 'Initializing client...')
+client.initialize().catch((_) => _) // Fixes
 
-main()
 setTimeout(async () => {
   logger(LoggerType.WARN, 'setTimeout', 'Shutting down due to timeout...')
   await client.destroy()
