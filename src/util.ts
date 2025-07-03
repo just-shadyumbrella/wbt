@@ -98,7 +98,6 @@ export async function sysinfo() {
 \`\`\`
 ${JSON.stringify(pkg, null, 2)}
 \`\`\`
-
 > ${versions.join(' | ')}`
 }
 

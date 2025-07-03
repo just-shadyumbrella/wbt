@@ -1,6 +1,6 @@
 {
   "name": "wbt",
-  "version": "0.1.4-alpha",
+  "version": "0.1.5-alpha",
   "description": "WBT WBt Wbt wbt",
   "type": "module",
   "main": "index.ts",

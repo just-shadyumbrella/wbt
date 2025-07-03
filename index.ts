@@ -17,7 +17,7 @@ const client = new WAWebJS.Client({
   puppeteer: {
     headless: arg === 'debug' ? false : true,
     executablePath: chromePath(),
-    timeout: 0, // Most runners issue
+    timeout: 0, // If browser startup slower
     args: ['--no-sandbox', '--disable-encryption', '--disable-machine-id'],
   },
 })
@@ -28,7 +28,7 @@ client.on('disconnected', (message) => {
   logger(LoggerType.WARN, 'index:client?disconnected', `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
     logger(LoggerType.INFO, 'client?initialize', 'Reinitializing client...')
-    client.initialize().catch((_) => _) // Fixes
+    client.initialize().catch((_) => _)
   }
 })
 client.on('loading_screen', (message) =>
@@ -77,7 +77,7 @@ client.on('message_create', async (message) => {
   }
 })
 
-logger(LoggerType.INFO, 'client?initialize', 'Initializing client...')
+logger(LoggerType.INFO, 'index:client?initialize', 'Initializing client...')
 client.initialize().catch((_) => _) // Fixes
 
 setTimeout(async () => {
