@@ -5,6 +5,7 @@ import WAWebJS from 'whatsapp-web.js'
 import { config } from 'dotenv'
 import path from 'node:path'
 
+chalk.level = 1
 config()
 
 /* CONSTANTS */

@@ -5,6 +5,7 @@ import commands from './src/commands.js'
 
 const arg = process.argv[2]
 if (arg === 'debug') console.log('Debug mode enabled.\n')
+if (arg === 'pushauth') console.log('Push puppeteer profile to cloud, automatically exit on authenticated.\n')
 
 const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
@@ -21,7 +22,13 @@ const client = new WAWebJS.Client({
 })
 
 client.on('auth_failure', (message) => logger(LoggerType.ERROR, 'index:client?auth_failure', message))
-client.on('authenticated', () => logger(LoggerType.LOG, 'index:client?authenticated', 'Client authenticated.'))
+client.on('authenticated', () => {
+  logger(LoggerType.INFO, 'index:client?authenticated', `Client authenticated.`)
+  if (arg === 'pushauth') {
+    console.log('Push auth mode, exiting...')
+    process.exit(0)
+  }
+})
 client.on('disconnected', (message) => {
   logger(LoggerType.WARN, 'index:client?disconnected', `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
@@ -69,12 +76,12 @@ async function main() {
   const maxRetries = 5
   const retryDelay = 5000
   for (let i = 0; i < maxRetries; i++) {
-    logger(
-      LoggerType.INFO,
-      'index:client?initialize',
-      `Client initializing...${i > 0 ? ` (Attempt ${i + 1}/${maxRetries})` : ''}`
-    )
     try {
+      logger(
+        LoggerType.INFO,
+        'index:client?initialize',
+        `Client initializing...${i > 0 ? ` (Attempt ${i + 1}/${maxRetries})` : ''}`
+      )
       await client.initialize()
       return // Success, exit the function
     } catch (err) {
