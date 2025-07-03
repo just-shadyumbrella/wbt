@@ -87,7 +87,7 @@ async function main() {
         `Client initializing...${i > 0 ? ` (Attempt ${i + 1}/${maxRetries})` : ''}`
       )
       await client.initialize()
-      return // Success, exit the function
+      // return // Success, exit the function
     } catch (err) {
       logger(LoggerType.ERROR, 'index:client?initialize', err)
       if (i < maxRetries - 1) {
