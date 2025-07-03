@@ -104,6 +104,7 @@ async function main() {
 
 main()
 setTimeout(async () => {
+  logger(LoggerType.WARN, 'setTimeout', 'Shutting down due to timeout...')
   await client.destroy()
   process.exit(0)
 }, 5 * 60 * 60 * 1000 + 50 * 60 * 1000) // Maximum 5:50

@@ -33,4 +33,4 @@ jobs:
         run: bun install;bun run . pushauth
         
       - name: Sync
-        run: sudo apt-get install tree;tree ./tokens;rclone delete cloud:tokens;rclone sync ./tokens cloud:tokens -P;rclone tree cloud:tokens
+        run: rclone delete cloud:tokens;rclone sync ./tokens cloud:tokens -P
