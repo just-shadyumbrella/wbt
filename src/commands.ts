@@ -107,7 +107,7 @@ for (const menu in WBT) {
   const menu_command_list: string[] = []
   for (const command in WBT[menu]) {
     commands[command] = WBT[menu][command]
-    menu_command_list.push(`- \`${command}\` ${commands[command].description}`)
+    menu_command_list.push(`- \`${PREFIX}${command}\` ${commands[command].description}`)
   }
   help += `\n*🔰 ${menu}*\n${menu_command_list.join('\n')}\n`
 }

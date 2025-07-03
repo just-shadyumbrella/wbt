@@ -4,6 +4,7 @@ import si from 'systeminformation'
 import WAWebJS from 'whatsapp-web.js'
 import { config } from 'dotenv'
 import path from 'node:path'
+import { arg } from '../index.js'
 
 chalk.level = 1
 config()
@@ -47,35 +48,23 @@ export function blushReact(index?: number) {
 const tmpDir = path.join(process.cwd(), '.tmp')
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
 
-async function loadOrCache<T>(filename: string, getter: () => Promise<T>): Promise<T> {
-  const filePath = path.join(tmpDir, filename)
-  if (fs.existsSync(filePath)) {
-    try {
-      const fileContent = await fs.promises.readFile(filePath, 'utf-8')
-      return JSON.parse(fileContent)
-    } catch (err) {
-      logger(LoggerType.WARN, `loadOrCache`, `Cannot load cache for \`${filename}\`:`, err)
-    }
-  }
-  const data = await getter()
-  await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2))
-  return data
-}
-
 console.log('Gathering system information...')
 console.time('System information stored')
-const system = await loadOrCache('system.json', si.system)
+const system = arg === 'debug' ? null : await si.system()
 console.timeEnd('System information stored')
 
 console.log('Gathering OS information...')
 console.time('OS information stored')
-const osInfo = await loadOrCache('osInfo.json', si.osInfo)
+const osInfo = arg === 'debug' ? null : await si.osInfo()
 console.timeEnd('OS information stored')
 
 console.time('CPU information stored')
-const cpu = await loadOrCache('cpu.json', si.cpu)
+const cpu = arg === 'debug' ? null : await si.cpu()
 console.timeEnd('CPU information stored')
 export async function sysinfo() {
+  if (arg === 'debug') {
+    return 'Host status skipped.'
+  }
   const time = si.time()
   console.log('Gathering memory information...')
   console.time('Memory information gathered')
