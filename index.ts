@@ -86,7 +86,7 @@ async function main() {
         'index:client?initialize',
         `Client initializing...${i > 0 ? ` (Attempt ${i + 1}/${maxRetries})` : ''}`
       )
-      await client.initialize()
+      await client.initialize().catch(_ => _) // Fixes
       // return // Success, exit the function
     } catch (err) {
       logger(LoggerType.ERROR, 'index:client?initialize', err)
@@ -95,7 +95,7 @@ async function main() {
         logger(LoggerType.WARN, 'index:client?initialize', `Attempting to restart client in ${retryDelay / 1000}s...`)
         await new Promise((resolve) => setTimeout(resolve, retryDelay))
       } else {
-        logger(LoggerType.ERROR, 'index:client?initialize', 'Max retry attempts reached. Could not initialize client.')
+        logger(LoggerType.ERROR, 'index:client?initialize', 'Reached maximum retries. Could not initialize client.')
         process.exit(1)
       }
     }
