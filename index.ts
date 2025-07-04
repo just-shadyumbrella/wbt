@@ -26,6 +26,7 @@ export const client = new WAWebJS.Client({
   puppeteer: {
     headless: arg === 'debug' ? false : true,
     executablePath: chromePath(),
+    args: ['--no-sandbox','--disable-setuid-sandbox'],
     timeout: 0, // If browser startup slower
   },
 })
