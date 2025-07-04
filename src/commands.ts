@@ -79,7 +79,7 @@ const WBT = {
         return await message.reply(math.evaluate(params.join(' ')).toString())
       },
     },
-    brat: {
+    brot: {
       description: 'Brat ngabz',
       handler: async (message: WAWebJS.Message, params: string[]) => {
         const command = params[0]
@@ -96,16 +96,19 @@ const WBT = {
         }
         const brat = await client.pupBrowser?.newPage()
         await brat?.setContent(
-          /* html */ `<div id="brat" style="display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"></div>`
+          /* html */ `<div id="brat" style="display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
         )
         await brat?.evaluate((realMsg) => {
           const div = document.querySelector('div#brat') as HTMLDivElement | null
-          if (div) {
-            div.innerText = realMsg
+          const span = document.querySelector('div#brat span') as HTMLSpanElement | null
+          if (div && span) {
+            span.innerText = realMsg
             const height = Number(getComputedStyle(div).height.replace('px', ''))
             const width = Number(getComputedStyle(div).width.replace('px', ''))
             const size = Math.sqrt(height * width)
             div.style.width = size.toString()
+            const spanWidth = Number(getComputedStyle(span).width.replace('px', ''))
+            div.style.width = (size + (spanWidth - size)).toString()
           }
         }, realMsg)
         const div = await brat?.waitForSelector('div')
