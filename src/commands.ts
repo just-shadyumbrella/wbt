@@ -1,6 +1,8 @@
+import fs from 'node:fs'
 import WAWebJS from 'whatsapp-web.js'
-import { getChat, PREFIX, sysinfo, useHelp } from './util.js'
 import { create, all } from 'mathjs'
+import { client } from '../index.js'
+import { PREFIX, getChat, sysinfo, useHelp } from './util.js'
 
 const math = create(all)
 
@@ -75,6 +77,49 @@ const WBT = {
         if (params.length < 2) return await sendText(message, useHelp([`${command} <expressions>`]))
         params.shift()
         return await message.reply(math.evaluate(params.join(' ')).toString())
+      },
+    },
+    brat: {
+      description: 'Brat ngabz',
+      handler: async (message: WAWebJS.Message, params: string[]) => {
+        const command = params[0]
+        let realMsg = ''
+        if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          realMsg = msgQ.body
+        } else if (params.length < 2) {
+          return await sendText(message, useHelp([`${command} <expressions>`]))
+        } else {
+          const msg = message.body.split(' ')
+          msg.shift()
+          realMsg = msg.join(' ')
+        }
+        const brat = await client.pupBrowser?.newPage()
+        await brat?.setContent(
+          /* html */ `<div id="brat" style="display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"></div>`
+        )
+        await brat?.evaluate((realMsg) => {
+          const div = document.querySelector('div#brat') as HTMLDivElement | null
+          if (div) {
+            div.innerText = realMsg
+            const height = Number(getComputedStyle(div).height.replace('px', ''))
+            const width = Number(getComputedStyle(div).width.replace('px', ''))
+            const size = Math.sqrt(height * width)
+            div.style.width = size.toString()
+          }
+        }, realMsg)
+        const div = await brat?.waitForSelector('div')
+        const screenshot = await div?.screenshot({
+          encoding: 'base64',
+          fromSurface: true,
+        })
+        if (typeof screenshot === 'string') {
+          // fs.writeFileSync('screenshot.png', Buffer.from(screenshot, 'base64'))
+          await brat?.close()
+          return await message.reply(new WAWebJS.MessageMedia('image/png', screenshot), undefined, {
+            sendMediaAsSticker: true,
+          })
+        }
       },
     },
     sticker: {

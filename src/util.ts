@@ -54,7 +54,7 @@ async function loadOrCache<T>(filename: string, getter: () => Promise<T>): Promi
       const fileContent = await fs.promises.readFile(filePath, 'utf-8')
       return JSON.parse(fileContent)
     } catch (err) {
-      logger(LoggerType.WARN, `loadOrCache`, `Cannot load cache for \`${filename}\`:`, err)
+      logger(LoggerType.WARN, { name: 'util', fn: 'loadOrCache' }, `Cannot load cache for \`${filename}\`:`, err)
     }
   }
   const data = await getter()
@@ -115,32 +115,40 @@ export function convertByteUnit(bytes: number, unit: 'KB' | 'MB' | 'GB') {
 }
 
 export enum LoggerType {
-  LOG = 'log',
-  INFO = 'info',
-  WARN = 'warn',
-  ERROR = 'error',
+  LOG,
+  INFO,
+  WARN,
+  ERROR,
 }
 
-export function logger(type: LoggerType, module: string, ...data: any[]) {
-  let prefix = ''
-  switch (type) {
-    case LoggerType.LOG:
-      prefix = chalk.white('LOG  ')
-      break
-    case LoggerType.INFO:
-      prefix = chalk.blue('INFO ')
-      break
-    case LoggerType.WARN:
-      prefix = chalk.yellow('WARN ')
-      break
-    case LoggerType.ERROR:
-      prefix = chalk.red('ERROR')
-      break
+export function logger(type: LoggerType, module: { name: string; fn: string; context?: string }, ...data: any[]) {
+  const consol = {
+    [LoggerType.LOG]: {
+      log: 'log',
+      chalk: chalk.white
+    },
+    [LoggerType.INFO]: {
+      log: 'info',
+      chalk: chalk.blue
+    },
+    [LoggerType.WARN]: {
+      log: 'warn',
+      chalk: chalk.yellow
+    },
+    [LoggerType.ERROR]: {
+      log: 'error',
+      chalk: chalk.red
+    },
   }
-  return console[type](`${prefix}`, leftAlignWithSpaces(`[${chalk.green(module)}]`), ...data)
+  if (typeof data[0] === 'string') data[0] = consol[type].chalk(data[0])
+  return console[consol[type].log](
+    consol[type].chalk(leftAlignWithSpaces(consol[type].log.toUpperCase(), consol[LoggerType.ERROR].log.length)),
+    leftAlignWithSpaces(`[${chalk.green(`${module.name}:${module.fn}${module.context ? `:${module.context}` : ''}`)}]`),
+    ...data
+  )
 }
 
-export function leftAlignWithSpaces(text: string, maxlength = 42 ) {
+export function leftAlignWithSpaces(text: string, maxlength = 42) {
   const r = maxlength >= text.length ? maxlength - text.length : 0
   return `${text}${' '.repeat(r)}`
 }
@@ -202,8 +210,12 @@ export function useHelp(commandInstructions: string[], description?: string) {
 export function chromePath() {
   if (process.platform === 'win32') {
     const win_chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-    const stat = fs.statSync(win_chrome)
-    if (stat.isFile()) return win_chrome
+    try {
+      const stat = fs.statSync(win_chrome)
+      if (stat.isFile()) return win_chrome
+    } catch (err) {
+      console.error(err)
+    }
   }
 }
 
