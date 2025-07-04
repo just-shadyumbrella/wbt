@@ -1,6 +1,10 @@
 name: My workflow
 on:
   push:
+  workflow_run:
+    workflows: ["Push Auth"]
+    types:
+      - completed
   workflow_dispatch:
   schedule:
     - cron: 0 */6 * * *
