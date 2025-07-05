@@ -1,4 +1,6 @@
 import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 import chalk from 'chalk'
 import si from 'systeminformation'
 import WAWebJS from 'whatsapp-web.js'
@@ -77,7 +79,7 @@ console.time('CPU information stored')
 const cpu = await loadOrCache('cpu.json', si.cpu)
 console.timeEnd('CPU information stored')
 export async function sysinfo() {
-  // const time = si.time()
+  // const time = si.time() // Somewhat causes puppeteer to close
   console.log('Gathering memory information...')
   console.time('Memory information gathered')
   const mem = await si.mem()
@@ -86,7 +88,7 @@ export async function sysinfo() {
   console.time('Filesystem information gathered')
   const fsSize = await si.fsSize()
   console.timeEnd('Filesystem information gathered')
-  return `*System Uptime:* ${new Date(Date.now()).toISOString().substr(11, 8)}
+  return `*System Uptime:* ${new Date(os.uptime() * 1000).toISOString().substr(11, 8)}
 *Runner:* ${system.manufacturer} ${system.model}${system.virtual ? ' (Virtualized)' : ''} ${system.version}
 *OS:* ${osInfo.distro} ${osInfo.release}${osInfo.codename ? ` "${osInfo.codename}"` : ''} (kernel: ${osInfo.kernel} ${
     osInfo.arch
