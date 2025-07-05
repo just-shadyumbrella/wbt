@@ -17,6 +17,6 @@ jobs:
         run: bunx systeminformation
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 'lts/*'
       - name: Node
         run: node -p 'os.cpus()'
