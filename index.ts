@@ -112,6 +112,8 @@ async function main() {
       console.error(e)
       logger(LoggerType.ERROR, { name, fn, context: 'initialize' }, 'Retrying client initialization in 5 seconds...')
       await new Promise((resolve) => setTimeout(resolve, 5000))
+      console.clear()
+      await client.destroy()
     }
   }
 }

@@ -5,7 +5,6 @@ import chalk from 'chalk'
 import si from 'systeminformation'
 import WAWebJS from 'whatsapp-web.js'
 import { config } from 'dotenv'
-import path from 'node:path'
 
 chalk.level = 1
 config()
@@ -73,8 +72,7 @@ console.log('Gathering OS information...')
 console.time('OS information stored')
 const osInfo = await loadOrCache('osInfo.json', si.osInfo)
 console.timeEnd('OS information stored')
-
-console.log('Gathering OS information...')
+console.log('Gathering CPU information...')
 console.time('CPU information stored')
 const cpu = await loadOrCache('cpu.json', si.cpu)
 console.timeEnd('CPU information stored')
