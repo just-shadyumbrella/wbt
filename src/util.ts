@@ -76,16 +76,17 @@ console.time('CPU information stored')
 const cpu = await loadOrCache('cpu.json', si.cpu)
 console.timeEnd('CPU information stored')
 export async function sysinfo() {
+  /*
   const time = si.time()
   console.log('Gathering memory information...')
   console.time('Memory information gathered')
-  // const mem = await si.mem()
+  const mem = await si.mem()
   const mem = { used: 1024*1024*1024, total: 1024*1024*1024 }
   console.timeEnd('Memory information gathered')
   console.log('Gathering filesystem information...')
   console.time('Filesystem information gathered')
   // const fsSize = await si.fsSize()
-  const fsSize = [{ used: 1024*1024*1024, size: 1024*1024*1024}]
+  fsSize = [{ used: 1024*1024*1024, size: 1024*1024*1024}]
   console.timeEnd('Filesystem information gathered')
   return `*System Uptime:* ${new Date(time.uptime * 1000).toISOString().substr(11, 8)}
 *Runner:* ${system.manufacturer} ${system.model}${system.virtual ? ' (Virtualized)' : ''} ${system.version}
@@ -101,6 +102,8 @@ export async function sysinfo() {
 ${JSON.stringify(pkg, null, 2)}
 \`\`\`
 > ${versions.join(' | ')}`
+*/
+  return "hello"
 }
 
 /* UTILS */
