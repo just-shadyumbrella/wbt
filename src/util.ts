@@ -78,11 +78,11 @@ console.timeEnd('CPU information stored')
 export async function sysinfo() {
   const time = si.time()
   console.log('Gathering memory information...')
-  await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
-  console.time('Memory information gathered')
-  await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
+  //await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
+  // console.time('Memory information gathered')
+  //await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
   const mem = await si.mem()
-  await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
+  /* await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
   console.timeEnd('Memory information gathered')
   await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
   console.log('Gathering filesystem information...')
@@ -102,7 +102,7 @@ export async function sysinfo() {
 \`\`\`
 ${JSON.stringify(pkg, null, 2)}
 \`\`\`
-> ${versions.join(' | ')}`
+> ${versions.join(' | ')}` */
   return "hello"
 }
 
