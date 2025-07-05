@@ -76,7 +76,7 @@ console.time('CPU information stored')
 const cpu = await loadOrCache('cpu.json', si.cpu)
 console.timeEnd('CPU information stored')
 export async function sysinfo() {
-  const time = si.time()
+  //const time = si.time()
   console.log('Gathering memory information...')
   //await new Promise(r => setTimeout(r, 1000)); // 1 second sleep
   // console.time('Memory information gathered')
