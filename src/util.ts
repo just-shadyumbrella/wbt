@@ -77,7 +77,7 @@ console.time('CPU information stored')
 const cpu = await loadOrCache('cpu.json', si.cpu)
 console.timeEnd('CPU information stored')
 export async function sysinfo() {
-  // const time = si.time() // Somewhat causes puppeteer to close
+  // const time = si.time() // Somewhat causes Puppeteer to close unexpectedly
   console.log('Gathering memory information...')
   console.time('Memory information gathered')
   const mem = await si.mem()
@@ -126,25 +126,25 @@ export function logger(type: LoggerType, module: { name: string; fn: string; con
   const consol = {
     [LoggerType.LOG]: {
       log: 'log',
-      chalk: chalk.white
+      chalk: chalk.white,
     },
     [LoggerType.INFO]: {
       log: 'info',
-      chalk: chalk.blue
+      chalk: chalk.blue,
     },
     [LoggerType.WARN]: {
       log: 'warn',
-      chalk: chalk.yellow
+      chalk: chalk.yellow,
     },
     [LoggerType.ERROR]: {
       log: 'error',
-      chalk: chalk.red
+      chalk: chalk.red,
     },
   }
   if (typeof data[0] === 'string') data[0] = consol[type].chalk(data[0])
   return console[consol[type].log](
     consol[type].chalk(leftAlignWithSpaces(consol[type].log.toUpperCase(), consol[LoggerType.ERROR].log.length)),
-    leftAlignWithSpaces(`[${chalk.green(`${module.name}:${module.fn}${module.context ? `:${module.context}` : ''}`)}]`),
+    leftAlignWithSpaces(`[${chalk.green(`${module.name}:${module.fn}${module.context ? `?${module.context}` : ''}`)}]`),
     ...data
   )
 }
@@ -156,7 +156,6 @@ export function leftAlignWithSpaces(text: string, maxlength = 42) {
 
 export function parseArguments(input: string) {
   function processEscapes(str: string) {
-    // Replace escaped quotes with regular quotes
     return str.replace(/\\"/g, '"')
   }
   const result: string[] = []
@@ -166,27 +165,19 @@ export function parseArguments(input: string) {
   while (i < input.length) {
     const char = input[i]
     if (char === '"') {
-      // Check if this quote is escaped
       if (i > 0 && input[i - 1] === '\\') {
-        // This is an escaped quote - add it to current token
         current += char
       } else {
-        // This is a quote boundary - toggle quote state
         inQuotes = !inQuotes
       }
     } else if (char === '\\' && i + 1 < input.length && input[i + 1] === '"') {
-      // This is an escape sequence for a quote - skip the backslash
-      // The quote will be handled in the next iteration
       current += char
     } else if (char === ' ' && !inQuotes) {
-      // Space outside quotes - end current token
       if (current.length > 0) {
-        // Process escape sequences in the final token
         result.push(processEscapes(current))
         current = ''
       }
     } else {
-      // Regular character or space inside quotes
       current += char
     }
     i++
@@ -199,6 +190,54 @@ export function parseArguments(input: string) {
   if (command && command.startsWith(PREFIX)) {
     return result
   }
+}
+
+export type ParsedCommand = {
+  command: string
+  flags: Record<string, string | boolean>
+  positional: string[]
+}
+
+function tokenize(command: string): string[] {
+  const regex = /"([^"]*)"|'([^']*)'|[^\s]+/g
+  const tokens: string[] = []
+
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(command)) !== null) {
+    tokens.push(match[1] ?? match[2] ?? match[0])
+  }
+
+  return tokens
+}
+
+export function parseArgumentsStructured(input: string, prefix = PREFIX): ParsedCommand | undefined {
+  const tokens = tokenize(input.trim())
+  if (tokens.length === 0 || !tokens[0].startsWith(prefix)) return undefined
+
+  const [command, ...args] = tokens
+  const flags: Record<string, string | boolean> = {}
+  const positional: string[] = []
+
+  let i = 0
+  while (i < args.length) {
+    const token = args[i]
+
+    if (token.startsWith('-')) {
+      const next = args[i + 1]
+      if (next === undefined || next.startsWith('-')) {
+        flags[token] = true
+        i += 1
+      } else {
+        flags[token] = next
+        i += 2
+      }
+    } else {
+      positional.push(token)
+      i += 1
+    }
+  }
+
+  return { command, flags, positional }
 }
 
 export function useHelp(commandInstructions: string[], description?: string) {

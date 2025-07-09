@@ -1,8 +1,8 @@
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import fs from 'node:fs'
-import { chromePath, logger, LoggerType, parseArguments, PREFIX } from './src/util.js'
-import commands from './src/commands.js'
+import { chromePath, logger, LoggerType, parseArguments, parseArgumentsStructured, PREFIX } from './src/util.js'
+import commands, { devCommands } from './src/commands.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -22,11 +22,11 @@ export const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
     dataPath: './tokens',
   }),
-  userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+  userAgent: process.env.USER_AGENT || 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
   puppeteer: {
     headless: arg === 'debug' ? false : true,
     executablePath: chromePath(),
-    args: ['--no-sandbox','--disable-setuid-sandbox'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     timeout: 0, // If browser startup slower
   },
 })
@@ -71,14 +71,33 @@ client.on('qr', (qr) => {
 
 client.on('message_create', async (message) => {
   const params = parseArguments(message.body)
-  if (params) {
-    const command = params[0].replace(PREFIX, '')
-    if (Object.hasOwn(commands, command)) {
+  const parsed = parseArgumentsStructured(message.body)
+  if (params && parsed) {
+    const command = parsed.command.replace(PREFIX, '')
+    if (command === '!' && message.fromMe) { // Developer/Owner commands
+      const devCommand = params[1]
+      if (Object.hasOwn(devCommands, command)) {
+        try {
+          const now = Date.now()
+          const chat = await message.getChat()
+          chat.sendStateTyping()
+          await devCommands[devCommand](message, params, parsed)
+          logger(
+            LoggerType.LOG,
+            { name, fn, context: `message_create=\$${command}!` },
+            'Request handled:',
+            `${(Date.now() - now) / 1000}s`
+          )
+        } catch (err) {
+          logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${devCommands}!` }, err, 'Params:', parsed)
+        }
+      }
+    } else if (Object.hasOwn(commands, command)) {
       try {
         const now = Date.now()
         const chat = await message.getChat()
         chat.sendStateTyping()
-        await commands[command].handler(message, params)
+        await commands[command].handler(message, params, parsed)
         logger(
           LoggerType.LOG,
           { name, fn, context: `message_create=\$${command}` },
@@ -86,14 +105,10 @@ client.on('message_create', async (message) => {
           `${(Date.now() - now) / 1000}s`
         )
       } catch (err) {
-        logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${command}` }, err, 'Params:', params)
+        logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${command}` }, err, 'Params:', parsed)
       }
     }
   }
-})
-
-client.pupBrowser?.on('disconnected', () => {
-  logger(LoggerType.ERROR, { name, fn, context: 'disconnected' }, 'Browser disconnected.')
 })
 
 let initialized = false
@@ -106,10 +121,13 @@ async function main() {
     )
     try {
       await client.initialize()
+      client.pupBrowser?.on('disconnected', () => {
+        logger(LoggerType.WARN, { name, fn, context: 'disconnected' }, 'Browser disconnected.')
+        process.exit(0)
+      })
       break
     } catch (e) {
       initialized = true
-      console.error(e)
       logger(LoggerType.ERROR, { name, fn, context: 'initialize' }, 'Retrying client initialization in 5 seconds...')
       await new Promise((resolve) => setTimeout(resolve, 5000))
       console.clear()

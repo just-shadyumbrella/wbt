@@ -1,8 +1,8 @@
-.env
 node_modules
 dist
 tokens
 *lock*
 *tmp*
-*.db
+*.db*
+.env*
 .w*
