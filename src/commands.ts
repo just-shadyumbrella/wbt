@@ -78,10 +78,13 @@ const WBT = {
       },
     },
     */
-    list: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-      params.shift()
-      const Chars = Object.keys(chars).map(e => `*@${e}*`)
-      return await message.reply(Chars.join('\n'))
+    list: {
+      description: '',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        params.shift()
+        const Chars = Object.keys(chars).map(e => `*@${e}*`)
+        return await message.reply(Chars.join('\n'))
+      }
     }
   },
   'Menu Lain': {
