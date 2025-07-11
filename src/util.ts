@@ -154,7 +154,7 @@ export function leftAlignWithSpaces(text: string, maxlength = 42) {
   return `${text}${' '.repeat(r)}`
 }
 
-export function parseArguments(input: string) {
+export function parseArguments(input: string, prefix: string[] = [PREFIX]) {
   function processEscapes(str: string) {
     return str.replace(/\\"/g, '"')
   }
@@ -187,7 +187,12 @@ export function parseArguments(input: string) {
     result.push(processEscapes(current))
   }
   const command = result[0]
-  if (command && command.startsWith(PREFIX)) {
+  const prefixValid = (() => {
+    for (const p of prefix) {
+      if (command.startsWith(p)) return true
+    }
+  })()
+  if (command && prefixValid) {
     return result
   }
 }
@@ -201,44 +206,56 @@ export type ParsedCommand = {
 function tokenize(command: string): string[] {
   const regex = /"([^"]*)"|'([^']*)'|[^\s]+/g
   const tokens: string[] = []
-
   let match: RegExpExecArray | null
   while ((match = regex.exec(command)) !== null) {
     tokens.push(match[1] ?? match[2] ?? match[0])
   }
-
   return tokens
 }
 
-export function parseArgumentsStructured(input: string, prefix = PREFIX): ParsedCommand | undefined {
+export function parseArgumentsStructured(input: string, prefix: string[] = [PREFIX]): ParsedCommand | undefined {
   const tokens = tokenize(input.trim())
-  if (tokens.length === 0 || !tokens[0].startsWith(prefix)) return undefined
-
-  const [command, ...args] = tokens
-  const flags: Record<string, string | boolean> = {}
-  const positional: string[] = []
-
-  let i = 0
-  while (i < args.length) {
-    const token = args[i]
-
-    if (token.startsWith('-')) {
-      const next = args[i + 1]
-      if (next === undefined || next.startsWith('-')) {
-        flags[token] = true
-        i += 1
+  const prefixValid = (() => {
+    for (const p of prefix) {
+      if (tokens[0].startsWith(p)) return true
+    }
+  })()
+  if (tokens.length > 0 && prefixValid) {
+    const [command, ...args] = tokens
+    const flags: Record<string, string | boolean> = {}
+    const positional: string[] = []
+    let i = 0
+    while (i < args.length) {
+      const token = args[i]
+      if (token.startsWith('-')) {
+        const next = args[i + 1]
+        if (next === undefined || next.startsWith('-')) {
+          flags[token] = true
+          i += 1
+        } else {
+          flags[token] = next
+          i += 2
+        }
       } else {
-        flags[token] = next
-        i += 2
+        positional.push(token)
+        i += 1
       }
-    } else {
-      positional.push(token)
-      i += 1
+    }
+    return { command, flags, positional }
+  }
+}
+
+export function extractCommandFromPrefix(command: string, prefix: string[] = [PREFIX]) {
+  let _ = ''
+  for (const p of prefix) {
+    if(command.startsWith(p)) {
+      _ = command.replace(p, '')
+      break
     }
   }
-
-  return { command, flags, positional }
+  return _
 }
+
 
 export function useHelp(commandInstructions: string[], description?: string) {
   const formattedInstructions = commandInstructions.map((e) => `\`${e}\``)

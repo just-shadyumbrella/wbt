@@ -1,7 +1,15 @@
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import fs from 'node:fs'
-import { chromePath, logger, LoggerType, parseArguments, parseArgumentsStructured, PREFIX } from './src/util.js'
+import {
+  chromePath,
+  extractCommandFromPrefix,
+  logger,
+  LoggerType,
+  parseArguments,
+  parseArgumentsStructured,
+  PREFIX,
+} from './src/util.js'
 import commands, { devCommands, etCommands } from './src/commands.js'
 
 try {
@@ -22,7 +30,9 @@ export const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
     dataPath: './tokens',
   }),
-  userAgent: process.env.USER_AGENT || 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+  userAgent:
+    process.env.USER_AGENT ||
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
   puppeteer: {
     headless: arg === 'debug' ? false : true,
     executablePath: chromePath(),
@@ -70,60 +80,68 @@ client.on('qr', (qr) => {
 })
 
 client.on('message_create', async (message) => {
-  const params = parseArguments(message.body)
-  const parsed = parseArgumentsStructured(message.body)
+  const matcher = [PREFIX, '@']
+  const params = parseArguments(message.body, matcher)
+  const parsed = parseArgumentsStructured(message.body, matcher)
   if (params && parsed) {
-    const command = parsed.command.replace(PREFIX, '')
-    if (command === PREFIX && message.fromMe) { // Developer/Owner commands
-      const devCommand = params[1]
-      if (Object.hasOwn(devCommands, devCommand)) {
+    const command = parsed.command
+    // TODO: Developer/Owner commands
+    if (parsed.command === PREFIX && message.fromMe) {
+      const cmd = params[1]
+      if (Object.hasOwn(devCommands, cmd)) {
         try {
           const now = Date.now()
           const chat = await message.getChat()
           chat.sendStateTyping()
-          await devCommands[devCommand](message, params, parsed)
+          await devCommands[cmd](message, params, parsed)
           logger(
             LoggerType.LOG,
-            { name, fn, context: `message_create=\$${command}!` },
+            { name, fn, context: `message_create=\$${cmd}!` },
             'Request handled:',
             `${(Date.now() - now) / 1000}s`
           )
         } catch (err) {
-          logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${devCommands}!` }, err, 'Params:', parsed)
+          logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${cmd}!` }, err, 'Params:', parsed)
         }
       }
-    } else if (command.startsWith('@')) { // TODO: Role mentions & Character AI
-      const etCommand = parsed.command.replace('@', '')
-      if (Object.hasOwn(etCommands, etCommand)) {
-        try {
-          const now = Date.now()
-          const chat = await message.getChat()
-          chat.sendStateTyping()
-          await etCommands[etCommand](message, params)
-          logger(
-            LoggerType.LOG,
-            { name, fn, context: `message_create=@${command}!` },
-            'Request handled:',
-            `${(Date.now() - now) / 1000}s`
-          )
-        } catch (err) {
-          logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${devCommands}!` }, err, 'Params:', parsed)
+    } else {
+      const cmd = extractCommandFromPrefix(parsed.command, [PREFIX, '@'])
+      // TODO: Role mentions & Character AI
+      if (command.startsWith('@')) {
+        if (Object.hasOwn(etCommands, cmd)) {
+          try {
+            const now = Date.now()
+            const chat = await message.getChat()
+            chat.sendStateTyping()
+            await etCommands[cmd](message, params)
+            logger(
+              LoggerType.LOG,
+              { name, fn, context: `message_create=@${cmd}` },
+              'Request handled:',
+              `${(Date.now() - now) / 1000}s`
+            )
+          } catch (err) {
+            logger(LoggerType.ERROR, { name, fn, context: `message_create=@${cmd}` }, err, 'Params:', parsed)
+          }
         }
-      }
-    } else if (Object.hasOwn(commands, command)) {
-      try {
-        const now = Date.now()
-        const chat = await message.getChat()
-        chat.sendStateTyping()
-        await commands[command].handler(message, params, parsed)
-        logger(
-          LoggerType.LOG,
-          { name, fn, context: `message_create=\$${command}` },
-          'Request handled:',
-          `${(Date.now() - now) / 1000}s`
-        )
-      } catch (err) {
-        logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${command}` }, err, 'Params:', parsed)
+      } else if (command.startsWith(PREFIX)) {
+        // TODO: Main commands
+        if (Object.hasOwn(commands, cmd)) {
+          try {
+            const now = Date.now()
+            const chat = await message.getChat()
+            chat.sendStateTyping()
+            await commands[cmd].handler(message, params, parsed)
+            logger(
+              LoggerType.LOG,
+              { name, fn, context: `message_create=\$${cmd}` },
+              'Request handled:',
+              `${(Date.now() - now) / 1000}s`
+            )
+          } catch (err) {
+            logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${cmd}` }, err, 'Params:', parsed)
+          }
+        }
       }
     }
   }

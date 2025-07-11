@@ -1,7 +1,8 @@
 import { waddler } from 'waddler/neo'
 import { config } from 'dotenv'
 import { logger, LoggerType } from './util.js'
-import { chars, MessagesSlot, Models } from './ai/@openrouter.js'
+import { chars, MessagesSlot } from './ai/@openrouter.js'
+import { Models } from './ai/@models.js'
 
 const name = 'db'
 config()

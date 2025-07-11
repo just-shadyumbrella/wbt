@@ -62,7 +62,7 @@ const WBT = {
       },
     },
   },
-  'Karakter AI (Mohon bantuannya!)': {
+  'Karakter AI (experimental!)': {
     /*
     new: {
       description: 'Buat room baru.',
@@ -79,11 +79,11 @@ const WBT = {
     },
     */
     list: {
-      description: '',
+      description: 'List karakter AI yang tersedia.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         params.shift()
         const Chars = Object.keys(chars).map(e => `*@${e}*`)
-        return await message.reply(Chars.join('\n'))
+        return await message.reply(`*🎭 List karakter AI yang tersedia:*\n\n${Chars.join('\n')}`)
       }
     }
   },
@@ -311,7 +311,7 @@ const WBT = {
   },
 }
 
-let help = `*Info penggunaan cukup kirim perintah tanpa argumen, atau \`${PREFIX}[perintah] help\`. Beberapa perintah dapat digunakan tanpa argumen.*\n\n> 👑 Hanya Admin\n`
+let help = `*📝 Info penggunaan cukup kirim perintah tanpa argumen, atau \`${PREFIX}[perintah] help\`. Beberapa perintah dapat digunakan tanpa argumen.*\n\n> 👑 Hanya Admin\n`
 let commands: Record<string, (typeof WBT)['Menu Utama']['start']> = {}
 for (const menu in WBT) {
   const menu_command_list: string[] = []
