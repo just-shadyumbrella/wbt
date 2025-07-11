@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { Models } from '../openrouter.js'
+import { Models } from './@models.js'
 
 export default {
   model: Models.V3,

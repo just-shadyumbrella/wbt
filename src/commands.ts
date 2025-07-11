@@ -4,7 +4,7 @@ import { create, all } from 'mathjs'
 import { client } from '../index.js'
 import { cai } from './db.js'
 import { extractFlatPhoneNumber, getAuthor, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
-import { chars, chat, chatUsingHistory } from './openrouter.js'
+import { chars, chat, chatUsingHistory } from './ai/@openrouter.js'
 
 const math = create(all)
 const WBT = {
