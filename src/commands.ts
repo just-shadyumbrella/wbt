@@ -3,7 +3,8 @@ import WAWebJS from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
 import { cai } from './db.js'
-import { ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
+import { extractFlatPhoneNumber, getAuthor, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
+import { chars, chat, chatUsingHistory } from './openrouter.js'
 
 const math = create(all)
 const WBT = {
@@ -62,11 +63,12 @@ const WBT = {
     },
   },
   'Karakter AI (Mohon bantuannya!)': {
+    /*
     new: {
       description: 'Buat room baru.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
-        if (params.length < 1) return await message.reply(useHelp([`${command} <nama karakter> <room name>`], ))
+        if (params.length < 1) return await message.reply(useHelp([`${command} <nama karakter> <room name>`]))
         const charName = params.shift()
         if (charName) {
           const roomName = params.join(' ')
@@ -74,6 +76,12 @@ const WBT = {
           return await message.reply(`Room ${roomName} telah dibuat.`)
         }
       },
+    },
+    */
+    list: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+      params.shift()
+      const Chars = Object.keys(chars).map(e => `*@${e}*`)
+      return await message.reply(Chars.join('\n'))
     }
   },
   'Menu Lain': {
@@ -171,7 +179,7 @@ const WBT = {
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
-        if (message.hasQuotedMsg) {
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
           const msgQ = await message.getQuotedMessage()
           realMsg = msgQ.body
         } else if (params.length < 1) {
@@ -183,7 +191,7 @@ const WBT = {
         }
         const brat = await client.pupBrowser?.newPage()
         await brat?.setContent(
-          /* html */ `<div id="brat" style="display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
+          /* html */ `<div id="brat" style="background: white;display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
         )
         await brat?.evaluate((realMsg) => {
           const div = document.querySelector('div#brat') as HTMLDivElement | null
@@ -203,7 +211,7 @@ const WBT = {
             div.style.width = `${spanWidth}px`
           }
         }, realMsg)
-        const div = await brat?.waitForSelector('div')
+        const div = await brat?.waitForSelector('div#brat')
         const screenshot = await div?.screenshot({
           encoding: 'base64',
           fromSurface: true,
@@ -222,7 +230,7 @@ const WBT = {
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
-        if (message.hasQuotedMsg) {
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
           const msgQ = await message.getQuotedMessage()
           realMsg = msgQ.body
         } else if (params.length < 1) {
@@ -262,7 +270,7 @@ const WBT = {
             }
           }
         }, realMsg)
-        const div = await brat?.waitForSelector('div')
+        const div = await brat?.waitForSelector('div#brat')
         const screenshot = await div?.screenshot({
           encoding: 'base64',
           fromSurface: true,
@@ -312,8 +320,25 @@ for (const menu in WBT) {
 }
 
 export const devCommands = {
-  model: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => { },
-  
+  shutdown: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+      logger(
+        LoggerType.WARN,
+        { name: 'commands', fn: 'devCommands', context: 'shutdown' },
+        'Shutting down command triggered...'
+      )
+      await client.destroy()
+      process.exit(0)
+  },
+}
+
+export const etCommands = {
+  Shiina: async (message: WAWebJS.Message, params: string[]) => {
+    params.shift()
+    const result = await chatUsingHistory(extractFlatPhoneNumber(getAuthor(message)), message.id.remote, 'Shiina', params.join(' '))
+    if (typeof result === 'string') {
+      return await message.reply(`*👧 Shiina*\n\n${result}`)
+    }
+  }
 }
 
 export default commands

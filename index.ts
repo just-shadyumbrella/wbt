@@ -2,7 +2,7 @@ import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import fs from 'node:fs'
 import { chromePath, logger, LoggerType, parseArguments, parseArgumentsStructured, PREFIX } from './src/util.js'
-import commands, { devCommands } from './src/commands.js'
+import commands, { devCommands, etCommands } from './src/commands.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -74,9 +74,9 @@ client.on('message_create', async (message) => {
   const parsed = parseArgumentsStructured(message.body)
   if (params && parsed) {
     const command = parsed.command.replace(PREFIX, '')
-    if (command === '!' && message.fromMe) { // Developer/Owner commands
+    if (command === PREFIX && message.fromMe) { // Developer/Owner commands
       const devCommand = params[1]
-      if (Object.hasOwn(devCommands, command)) {
+      if (Object.hasOwn(devCommands, devCommand)) {
         try {
           const now = Date.now()
           const chat = await message.getChat()
@@ -85,6 +85,24 @@ client.on('message_create', async (message) => {
           logger(
             LoggerType.LOG,
             { name, fn, context: `message_create=\$${command}!` },
+            'Request handled:',
+            `${(Date.now() - now) / 1000}s`
+          )
+        } catch (err) {
+          logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${devCommands}!` }, err, 'Params:', parsed)
+        }
+      }
+    } else if (command.startsWith('@')) { // TODO: Role mentions & Character AI
+      const etCommand = parsed.command.replace('@', '')
+      if (Object.hasOwn(etCommands, etCommand)) {
+        try {
+          const now = Date.now()
+          const chat = await message.getChat()
+          chat.sendStateTyping()
+          await etCommands[etCommand](message, params)
+          logger(
+            LoggerType.LOG,
+            { name, fn, context: `message_create=@${command}!` },
             'Request handled:',
             `${(Date.now() - now) / 1000}s`
           )

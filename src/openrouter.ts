@@ -1,21 +1,12 @@
 import OpenAI from 'openai'
 import { config } from 'dotenv'
+import { logger, LoggerType } from './util.js'
 import Raiden from './ai/raiden.js'
 import Wanderer from './ai/wanderer.js'
-import { logger, LoggerType } from './util.js'
+import Shiina from './ai/shiina.js'
 
 const name = 'openrouter'
-const chars = { Raiden, Wanderer }
-
-export function makePromptTemplate(definition: string) {
-  return `[PERLU DIINGAT: Kamu berbicara dengan banyak {{user}}, setiap pesan dari {{user}} selalu diawali dengan "@628XXXXXXXXXX", harap balas dengan menyebut mereka bila perlu agar jelas kepada siapa kamu menjawab.]
-
-[Kamu sedang memerankan karakter ini seakurat mungkin, jadi buat percakapan seolah kau adalah mereka:]
-
-${definition}
-
-[GUNAKAN BAHASA INDONESIA YANG BAIK DAN BENAR MULAI DARI SEKARANG]`
-}
+export const chars = { Shiina, Raiden, Wanderer }
 
 config()
 
@@ -91,13 +82,22 @@ export enum Models {
 
 const keys = process.env.OPENROUTER?.split(',')
 
+export type MessagesSlot = OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+
+/**
+ * @param user The name of user the bot will call for.
+ * @param charName The name of character definition available. See `chars` above.
+ * @param msg Message to send.
+ * @param modelOptions Model used, parameters, and more. See more at OpenRouter Docs.
+ * @param messagesSlot This is important for memory.
+ * @param memorySlotLimit This is the limit of messages in memory.
+ */
 export async function chat(
   user: string,
-  room: string,
   charName: keyof typeof chars,
   msg: string,
-  modelOptions: OpenAI.ChatCompletionCreateParams
-) {
+  messagesSlot: MessagesSlot = []
+): Promise<MessagesSlot> {
   const fn = 'chat'
   if (keys) {
     for (const key of keys) {
@@ -108,19 +108,19 @@ export async function chat(
           baseURL: 'https://openrouter.ai/api/v1',
           apiKey: key,
         })
-        const options: OpenAI.ChatCompletionCreateParams = {
-          ...modelOptions,
-          messages: [
-            { role: 'system', content: chars[charName] },
-            // ...history, // ← Tambahkan seluruh memori sebelumnya
-            { role: 'user', content: `@${user}: ${msg}` }, // ← Tambahkan pesan terbaru
-          ],
+        const definition = chars[charName] as OpenAI.ChatCompletionCreateParams
+        const MessagesSlotPush: MessagesSlot = [
+          ...definition.messages,
+          ...messagesSlot,
+          { role: 'user', content: `@${user}: ${msg}` },
+        ]
+        const completion = await openai.chat.completions.create({
+          ...chars[charName],
+          messages: MessagesSlotPush,
           stream: false,
-        }
-        logger(LoggerType.LOG, { name, fn }, 'OpenAI:', options)
-        const completion = await openai.chat.completions.create(options)
+        })
         const content = completion.choices[0].message.content
-        return modelResponseFix(user, content || '')
+        return [...MessagesSlotPush, { role: 'assistant', content: modelResponseFix(user, content || '') }]
       } catch (error) {
         logger(LoggerType.ERROR, { name, fn }, `Error using key ${ky}:`, error)
       }
@@ -129,4 +129,37 @@ export async function chat(
   } else {
     throw new Error('No key provided')
   }
+}
+
+/** Map based in-memory storage for chat history. */
+
+let MemorySlotLimit = 16
+
+export function memorySlotLimit(limit?: number) {
+  if (limit) MemorySlotLimit = limit
+  return MemorySlotLimit
+}
+
+const History = new Map<string, MessagesSlot>()
+
+export function history(key: string, messagesSlot?: MessagesSlot) {
+  if (messagesSlot) {
+    // Always keep only the latest MemorySlotLimit messages
+    const truncatedMemory = messagesSlot.slice(-MemorySlotLimit)
+    History.set(key, truncatedMemory)
+  }
+  return History.get(key) || []
+}
+
+export async function chatUsingHistory(
+  senderNumber: string,
+  chatId: string,
+  charName: keyof typeof chars,
+  msg: string
+) {
+  const key = `${senderNumber}:${charName}:${chatId}`
+  const prevHistory = history(key)
+  const result = await chat(senderNumber, charName, msg, prevHistory)
+  history(key, result.slice(-MemorySlotLimit))
+  return result[result.length - 1].content
 }
