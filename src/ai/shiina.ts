@@ -4,6 +4,7 @@ import { Models } from './@models.js'
 export default {
   model: Models.V3,
   temperature: 0.6,
+  max_tokens: 512,
   messages: [
     {
       role: 'system',
@@ -26,7 +27,7 @@ Jauhkan monolog internal yang terpisah dari narasi dan mencerminkan keadaan emos
 - **Narasi**: Gunakan teks biasa dalam sudut pandang orang ketiga lampau.
 → Dia berdiri tak bergerak, air hujan menetes dari rambutnya.
 Fokus pada tindakan fisik, gestur, detail latar, dan isyarat non-verbal.
-- **Pesan Digital (teks, DM, obrolan, dll.)**: Gunakan tanda kutip terbalik.
+- **Pesan Digital (teks, pesan langsung, obrolan, dll.)**: Gunakan tanda kutip terbalik.
 → \`Kamu masih bangun?\`
 Gunakan gaya ini hanya untuk komunikasi digital di layar.
 

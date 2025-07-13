@@ -3,8 +3,8 @@ import WAWebJS from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
 import { cai } from './db.js'
-import { extractFlatPhoneNumber, getAuthor, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
-import { chars, chat, chatUsingHistory } from './ai/@openrouter.js'
+import { extractFlatPhoneNumber, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
+import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
 
 const math = create(all)
 const WBT = {
@@ -82,10 +82,10 @@ const WBT = {
       description: 'List karakter AI yang tersedia.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         params.shift()
-        const Chars = Object.keys(chars).map(e => `*@${e}*`)
+        const Chars = Object.keys(chars).map((e) => `*@${e}*`)
         return await message.reply(`*🎭 List karakter AI yang tersedia:*\n\n${Chars.join('\n')}`)
-      }
-    }
+      },
+    },
   },
   'Menu Lain': {
     math: {
@@ -309,6 +309,13 @@ const WBT = {
       },
     },
   },
+  '/': {
+    description: '?',
+    handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+      params.shift()
+      return await devCommands[params[0]](message, params, parsed)
+    },
+  },
 }
 
 let help = `*📝 Info penggunaan cukup kirim perintah tanpa argumen, atau \`${PREFIX}[perintah] help\`. Beberapa perintah dapat digunakan tanpa argumen.*\n\n> 👑 Hanya Admin\n`
@@ -317,31 +324,68 @@ for (const menu in WBT) {
   const menu_command_list: string[] = []
   for (const command in WBT[menu]) {
     commands[command] = WBT[menu][command]
-    menu_command_list.push(`- \`${PREFIX}${command}\` ${commands[command].description}`)
+    if (command !== PREFIX) menu_command_list.push(`- \`${PREFIX}${command}\` ${commands[command].description}`)
   }
   help += `\n*🔰 ${menu}*\n${menu_command_list.join('\n')}\n`
 }
 
-export const devCommands = {
+const devCommands = {
   shutdown: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-      logger(
-        LoggerType.WARN,
-        { name: 'commands', fn: 'devCommands', context: 'shutdown' },
-        'Shutting down command triggered...'
-      )
-      await client.destroy()
-      process.exit(0)
+    logger(
+      LoggerType.WARN,
+      { name: 'commands', fn: 'devCommands', context: 'shutdown' },
+      'Shutting down command triggered...'
+    )
+    await client.destroy()
+    process.exit(0)
   },
 }
 
-export const etCommands = {
-  Shiina: async (message: WAWebJS.Message, params: string[]) => {
-    params.shift()
-    const result = await chatUsingHistory(extractFlatPhoneNumber(getAuthor(message)), message.id.remote, 'Shiina', params.join(' '))
-    if (typeof result === 'string') {
-      return await message.reply(`*👧 Shiina*\n\n${result}`)
-    }
-  }
+const caiSettings = {
+  // < [charName] <command> <param> <value?>
+  history: {
+    descripton: 'Setelan memori lokal.',
+    handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+      const cmd = params[3]
+      if (cmd === 'reset') {
+        const key = `${extractFlatPhoneNumber(message.author || '')}:${params[2]}:${message.id.remote}`
+        history(key, [])
+        return await message.reply('History reset.')
+      } else {
+        const mem = Number(cmd)
+        if (!isNaN(mem)) {
+          return await message.reply(`Current history slot: ${memorySlotLimit(mem)}`)
+        }
+      }
+    },
+  },
+}
+
+export const caiCommands = {
+  '<': {
+    descripton: 'Pengaturan bot roleplay.',
+    handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+      const command = params[2]
+      if (Object.hasOwn(caiSettings, command)) {
+        caiSettings[command].handler(message, params, parsed)
+      }
+    },
+  },
+  Shiina: {
+    descripton: 'Adik kelas yang imut~',
+    handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+      params.shift()
+      const result = await chatUsingHistory(
+        extractFlatPhoneNumber(message.author || ''),
+        message.id.remote,
+        'Shiina',
+        params.join(' ')
+      )
+      if (typeof result === 'string') {
+        return await message.reply(`*🎀 Shiina*\n\n${result}`)
+      }
+    },
+  },
 }
 
 export default commands

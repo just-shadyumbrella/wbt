@@ -91,14 +91,10 @@ export async function chat(
           apiKey: key,
         })
         const definition = chars[charName] as OpenAI.ChatCompletionCreateParams
-        const MessagesSlotPush: MessagesSlot = [
-          ...definition.messages,
-          ...messagesSlot,
-          { role: 'user', content: `@${user}: ${msg}` },
-        ]
+        const MessagesSlotPush: MessagesSlot = [...messagesSlot, { role: 'user', content: `@${user}: ${msg}` }]
         const completion = await openai.chat.completions.create({
           ...chars[charName],
-          messages: MessagesSlotPush,
+          messages: [...definition.messages, ...MessagesSlotPush],
           stream: false,
         })
         const content = completion.choices[0].message.content

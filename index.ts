@@ -10,7 +10,7 @@ import {
   parseArgumentsStructured,
   PREFIX,
 } from './src/util.js'
-import commands, { devCommands, etCommands } from './src/commands.js'
+import commands, { caiCommands } from './src/commands.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -56,7 +56,7 @@ client.on('loading_screen', (message) =>
   logger(LoggerType.LOG, { name, fn, context: 'loading_screen' }, `Client loading ${message}%`)
 )
 client.on('change_state', (state) =>
-  logger(LoggerType.INFO, { name, fn, context: 'change_state' }, `Client \`${state}\`.`)
+  logger(LoggerType.INFO, { name, fn, context: 'change_state' }, 'Client state:', state)
 )
 client.on('ready', async () => {
   logger(LoggerType.INFO, { name, fn, context: 'ready' }, `Client ready.`)
@@ -78,7 +78,7 @@ client.on('qr', (qr) => {
   console.log('Scan QR:')
   qrcode.generate(qr, { small: true })
 })
-
+/*
 client.on('message_create', async (message) => {
   const matcher = [PREFIX, '@']
   const params = parseArguments(message.body, matcher)
@@ -146,6 +146,41 @@ client.on('message_create', async (message) => {
     }
   }
 })
+*/
+
+/**
+ * Several commands types of commands:
+ *
+ * /command
+ * / command (dev)
+ * @mention
+ * @ mention (settings)
+ */
+client.on('message_create', async (message) => {
+  const now = Date.now()
+  let context = ''
+  const matcher = [PREFIX, '<']
+  const params = parseArguments(message.body, matcher)
+  const parsed = parseArgumentsStructured(message.body, matcher)
+  try {
+    if (params && parsed) {
+      const command = parsed.command
+      const cmd = extractCommandFromPrefix(command, matcher)
+      const chat = await message.getChat()
+      chat.sendStateTyping()
+      if (command.startsWith(PREFIX) && Object.hasOwn(commands, cmd)) {
+        context = `message_create=\$${cmd}${command === PREFIX ? '!' : ''}`
+        await commands[cmd].handler(message, params, parsed)
+      } else if (command.startsWith('@') && Object.hasOwn(caiCommands, cmd)) {
+        context = `message_create=<${command === '<' ? `${params[1]}!${params[2]}` : cmd}`
+        await caiCommands[cmd].handler(message, params, parsed)
+      }
+      logger(LoggerType.LOG, { name, fn, context: context }, 'Request handled:', `${(Date.now() - now) / 1000}s`)
+    }
+  } catch (err) {
+    logger(LoggerType.ERROR, { name, fn, context }, err, 'Data:', {params, parsed})
+  }
+})
 
 let initialized = false
 async function main() {
@@ -176,6 +211,6 @@ setTimeout(async () => {
   logger(LoggerType.WARN, { name, fn: 'setTimeout', context: 'destroy' }, 'Shutting down due to timeout...')
   await client.destroy()
   process.exit(0)
-}, 5 * 60 * 60 * 1000 + 50 * 60 * 1000) // Maximum 5:50
+}, 5 * 60 * 60 * 1000 + 55 * 60 * 1000) // Maximum 5:55
 
 main()

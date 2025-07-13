@@ -281,10 +281,6 @@ export function extractFlatPhoneNumber(number: string) {
   return number.replace(/(@\w+)(\.\w+(\.\w+)?[^.\W])$/g, '')
 }
 
-export function getAuthor(message: WAWebJS.Message) {
-  return message.fromMe ? message.to : message.from
-}
-
 export type Chat = WAWebJS.Chat & { client: WAWebJS.Client; lastMessage: { client: WAWebJS.Client } }
 export type GroupChat = WAWebJS.GroupChat & { client: WAWebJS.Client; lastMessage: { client: WAWebJS.Client } }
 
