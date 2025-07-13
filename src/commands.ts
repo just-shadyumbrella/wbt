@@ -308,12 +308,12 @@ const WBT = {
         }
       },
     },
-  },
-  '/': {
-    description: '?',
-    handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-      params.shift()
-      return await devCommands[params[0]](message, params, parsed)
+    '/': {
+      description: '?',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        params.shift()
+        return await devCommands[params[0]](message, params, parsed)
+      },
     },
   },
 }
