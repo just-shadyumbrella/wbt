@@ -5,6 +5,7 @@ import { client } from '../index.js'
 import { cai } from './db.js'
 import { extractFlatPhoneNumber, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
 import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
+import path from 'node:path'
 
 const math = create(all)
 const WBT = {
@@ -27,6 +28,12 @@ const WBT = {
       description: 'Cek status host.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         return await message.reply(await sysinfo())
+      },
+    },
+    upcoming: {
+      description: 'Cek fitur-fitur yang direncanakan developer.',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        return await message.reply(fs.readFileSync(path.join(process.cwd(), 'src', 'upcoming.md')).toString())
       },
     },
   },
@@ -308,7 +315,7 @@ const WBT = {
         }
       },
     },
-    '/': {
+    [PREFIX]: {
       description: '?',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         params.shift()
@@ -348,14 +355,13 @@ const caiSettings = {
     handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
       const cmd = params[3]
       if (cmd === 'reset') {
-        const key = `${extractFlatPhoneNumber(message.author || '')}:${params[2]}:${message.id.remote}`
+        const char = params[2]
+        const key = `${extractFlatPhoneNumber(message.author || '')}:${char}:${message.id.remote}`
         history(key, [])
-        return await message.reply('History reset.')
+        return await message.reply(`Reset history for character: ${char}`)
       } else {
         const mem = Number(cmd)
-        if (!isNaN(mem)) {
-          return await message.reply(`Current history slot: ${memorySlotLimit(mem)}`)
-        }
+        return await message.reply(`Current history slot: ${memorySlotLimit(mem)}`)
       }
     },
   },

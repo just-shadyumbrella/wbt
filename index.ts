@@ -87,21 +87,20 @@ client.on('message_create', async (message) => {
   const parsed = parseArgumentsStructured(message.body, matcher)
   try {
     if (params && parsed) {
-      const command = parsed.command
-      const cmd = extractCommandFromPrefix(command, matcher)
+      const command = extractCommandFromPrefix(parsed.command, matcher)
       const chat = await message.getChat()
       chat.sendStateTyping()
-      if (command.startsWith(PREFIX) && Object.hasOwn(commands, cmd)) {
-        context = `message_create=\$${cmd}${command === PREFIX ? '!' : ''}`
-        await commands[cmd].handler(message, params, parsed)
-      } else if (command.startsWith(matcher[1]) && Object.hasOwn(caiCommands, cmd)) {
-        context = `message_create=<${command === matcher[1] ? `${params[1]}!${params[2]}` : cmd}`
-        await caiCommands[cmd].handler(message, params, parsed)
+      if (Object.hasOwn(commands, command)) {
+        context = `message_create=\$${command}${command === PREFIX ? '!' : ''}`
+        await commands[command].handler(message, params, parsed)
+      } else if (Object.hasOwn(caiCommands, command)) {
+        context = `message_create=<${command === matcher[1] ? `${params[1]}!${params[2]}` : command}`
+        await caiCommands[command].handler(message, params, parsed)
       }
       logger(LoggerType.LOG, { name, fn, context: context }, 'Request handled:', `${(Date.now() - now) / 1000}s`)
     }
   } catch (err) {
-    logger(LoggerType.ERROR, { name, fn, context }, err, 'Data:', {params, parsed})
+    logger(LoggerType.ERROR, { name, fn, context }, err, 'Data:', { params, parsed })
   }
 })
 

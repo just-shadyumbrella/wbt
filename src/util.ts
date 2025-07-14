@@ -250,6 +250,7 @@ export function parseArgumentsStructured(input: string, prefix: string[] = [PREF
 export function extractCommandFromPrefix(command: string, prefix: string[] = [PREFIX]) {
   let _ = ''
   for (const p of prefix) {
+    if (command === p) return command
     if (command.startsWith(p)) {
       _ = command.replace(p, '')
       break
