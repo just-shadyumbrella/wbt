@@ -78,84 +78,7 @@ client.on('qr', (qr) => {
   console.log('Scan QR:')
   qrcode.generate(qr, { small: true })
 })
-/*
-client.on('message_create', async (message) => {
-  const matcher = [PREFIX, '@']
-  const params = parseArguments(message.body, matcher)
-  const parsed = parseArgumentsStructured(message.body, matcher)
-  if (params && parsed) {
-    const command = parsed.command
-    // TODO: Developer/Owner commands
-    if (parsed.command === PREFIX && message.fromMe) {
-      const cmd = params[1]
-      if (Object.hasOwn(devCommands, cmd)) {
-        try {
-          const now = Date.now()
-          const chat = await message.getChat()
-          chat.sendStateTyping()
-          await devCommands[cmd](message, params, parsed)
-          logger(
-            LoggerType.LOG,
-            { name, fn, context: `message_create=\$${cmd}!` },
-            'Request handled:',
-            `${(Date.now() - now) / 1000}s`
-          )
-        } catch (err) {
-          logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${cmd}!` }, err, 'Params:', parsed)
-        }
-      }
-    } else {
-      const cmd = extractCommandFromPrefix(parsed.command, [PREFIX, '@'])
-      // TODO: Role mentions & Character AI
-      if (command.startsWith('@')) {
-        if (Object.hasOwn(etCommands, cmd)) {
-          try {
-            const now = Date.now()
-            const chat = await message.getChat()
-            chat.sendStateTyping()
-            await etCommands[cmd](message, params)
-            logger(
-              LoggerType.LOG,
-              { name, fn, context: `message_create=@${cmd}` },
-              'Request handled:',
-              `${(Date.now() - now) / 1000}s`
-            )
-          } catch (err) {
-            logger(LoggerType.ERROR, { name, fn, context: `message_create=@${cmd}` }, err, 'Params:', parsed)
-          }
-        }
-      } else if (command.startsWith(PREFIX)) {
-        // TODO: Main commands
-        if (Object.hasOwn(commands, cmd)) {
-          try {
-            const now = Date.now()
-            const chat = await message.getChat()
-            chat.sendStateTyping()
-            await commands[cmd].handler(message, params, parsed)
-            logger(
-              LoggerType.LOG,
-              { name, fn, context: `message_create=\$${cmd}` },
-              'Request handled:',
-              `${(Date.now() - now) / 1000}s`
-            )
-          } catch (err) {
-            logger(LoggerType.ERROR, { name, fn, context: `message_create=\$${cmd}` }, err, 'Params:', parsed)
-          }
-        }
-      }
-    }
-  }
-})
-*/
 
-/**
- * Several commands types of commands:
- *
- * /command
- * / command (dev)
- * @mention
- * @ mention (settings)
- */
 client.on('message_create', async (message) => {
   const now = Date.now()
   let context = ''
@@ -171,8 +94,8 @@ client.on('message_create', async (message) => {
       if (command.startsWith(PREFIX) && Object.hasOwn(commands, cmd)) {
         context = `message_create=\$${cmd}${command === PREFIX ? '!' : ''}`
         await commands[cmd].handler(message, params, parsed)
-      } else if (command.startsWith('@') && Object.hasOwn(caiCommands, cmd)) {
-        context = `message_create=<${command === '<' ? `${params[1]}!${params[2]}` : cmd}`
+      } else if (command.startsWith(matcher[1]) && Object.hasOwn(caiCommands, cmd)) {
+        context = `message_create=<${command === matcher[1] ? `${params[1]}!${params[2]}` : cmd}`
         await caiCommands[cmd].handler(message, params, parsed)
       }
       logger(LoggerType.LOG, { name, fn, context: context }, 'Request handled:', `${(Date.now() - now) / 1000}s`)

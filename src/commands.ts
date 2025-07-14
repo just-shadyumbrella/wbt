@@ -30,7 +30,7 @@ const WBT = {
       },
     },
   },
-  'Menu Grup': {
+  'Menu Grup (belum selesai)': {
     // promote: {
     //   description: 'Cek status host.',
     //   handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
