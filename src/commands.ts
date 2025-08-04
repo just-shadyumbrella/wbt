@@ -358,10 +358,10 @@ const caiSettings = {
         const char = params[2]
         const key = `${extractFlatPhoneNumber(message.author || '')}:${char}:${message.id.remote}`
         history(key, [])
-        return await message.reply(`Reset history for character: \`${char}\``)
+        return await message.reply(`Reset history for character: ${char}`)
       } else {
         const mem = Number(cmd)
-        return await message.reply(`Current history slot: \`${memorySlotLimit(mem)}\``)
+        return await message.reply(`Current history slot: ${memorySlotLimit(mem)}`)
       }
     },
   },

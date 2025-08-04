@@ -19,12 +19,12 @@
 - `/promote` Memberikan tahta admin. 👑
 - `/demote` Kudeta admin. 👑
 
-*🔰 Menu Fun:*
+*Menu Fun:*
 - `/jodoh` Jodohkan member grup secara acak.
 - `/kerangajaib` 🐚 Puja Kerang Ajaib! ULOLOLOLOLOLOLOLOLOLO 👅 (berbasis LLM)
 - `/percent` Seberapa persen keberuntungan kamu.
 
-*🔰 Menu Lain-lain:*
+*Menu Lain-lain:*
 - `/sticker` Stiker yang bisa dikasih wm author, pack, dan kategori.
 - `/meme` Editor meme sederhana, bisa buat stiker atau shitpost.
 - `/yt-dlp` Alat download YouTube dan website lainnya. Bisa langsung diubah jadi media WhatsApp atau dokumen.
