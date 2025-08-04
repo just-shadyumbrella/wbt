@@ -1,16 +1,9 @@
+import fs from 'node:fs'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
-import fs from 'node:fs'
-import {
-  chromePath,
-  extractCommandFromPrefix,
-  logger,
-  LoggerType,
-  parseArguments,
-  parseArgumentsStructured,
-  PREFIX,
-} from './src/util.js'
 import commands, { caiCommands } from './src/commands.js'
+import { logger, LoggerType } from './src/util/logger.js'
+import { chromePath, PREFIX, parseArguments, parseArgumentsStructured, extractCommandFromPrefix } from './src/util/wa.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })

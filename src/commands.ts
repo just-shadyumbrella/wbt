@@ -1,11 +1,14 @@
 import fs from 'node:fs'
+import path from 'node:path'
 import WAWebJS from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
-import { cai } from './db.js'
-import { extractFlatPhoneNumber, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
 import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
-import path from 'node:path'
+import warn from './db/warn.js'
+import { arnd } from './db/index.js'
+import { logger, LoggerType } from './util/logger.js'
+import { sysinfo } from './util/si.js'
+import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage } from './util/wa.js'
 
 const math = create(all)
 const WBT = {
@@ -50,12 +53,40 @@ const WBT = {
     //     return await message.reply(await sysinfo())
     //   },
     // },
-    kick: {
-      description: 'Keluarkan member. 👑',
+    warn: {
+      description: 'null. 👑',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-        // params = params.map((e) => e.replace('@', ''))
-        // console.log(params)
-        return
+        if (await isAdmin(message)) {
+          const command = params.shift()
+          if (params.length < 1)
+            return await message.reply(useHelp([`${command} <@mention> <level?>`, `[MESSAGE] ↩️ ${command} <level?>`]))
+          const who = await(async () => {
+            const expect = params[0]
+            const isLevel = Number(expect)
+            if (isNaN(isLevel)) {
+              if (expect.startsWith('@')) {
+                return expect.replace('@', '')
+              }
+            } else if (message.hasQuotedMsg) {
+              const msgQ = await message.getQuotedMessage()
+              return await extractFlatPhoneNumberFromMessage(msgQ)
+            }
+          })()
+          const level = Number(params[params.length - 1])
+          if (who && level) {
+            const { numbers } = await warn.get(message.id.remote)
+            numbers.
+          }
+        }
+      },
+    },
+    setwarn: {
+      description: 'null. 👑',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        if (await isAdmin(message)) {
+          warn.set({ chat_id: message.id.remote })
+          return await message.reply('Warn setup.')
+        }
       },
     },
   },
@@ -356,7 +387,7 @@ const caiSettings = {
       const cmd = params[3]
       if (cmd === 'reset') {
         const char = params[2]
-        const key = `${extractFlatPhoneNumber(message.author || '')}:${char}:${message.id.remote}`
+        const key = `${await extractFlatPhoneNumberFromMessage(message)}:${char}:${message.id.remote}`
         history(key, [])
         return await message.reply(`Reset history for character: \`${char}\``)
       } else {
@@ -382,7 +413,7 @@ export const caiCommands = {
     handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
       params.shift()
       const result = await chatUsingHistory(
-        extractFlatPhoneNumber(message.author || ''),
+        await extractFlatPhoneNumberFromMessage(message),
         message.id.remote,
         'Shiina',
         params.join(' ')
