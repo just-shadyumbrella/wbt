@@ -6,6 +6,8 @@ config()
 
 export const PREFIX = process.env.PREFIX || '/'
 
+export const PHONE_NUMBER = process.env.PHONE_NUMBER
+
 export const readMore = ` ${'\u{34f}'.repeat(1024 * 3)}`
 
 /**

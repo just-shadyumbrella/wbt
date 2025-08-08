@@ -5,7 +5,6 @@ import { create, all } from 'mathjs'
 import { client } from '../index.js'
 import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
 import warn from './db/warn.js'
-import { arnd } from './db/index.js'
 import { logger, LoggerType } from './util/logger.js'
 import { sysinfo } from './util/si.js'
 import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage } from './util/wa.js'
@@ -40,19 +39,20 @@ const WBT = {
       },
     },
   },
+  /*
   'Menu Grup (belum selesai)': {
-    // promote: {
-    //   description: 'Cek status host.',
-    //   handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-    //     return await message.reply(await sysinfo())
-    //   },
-    // },
-    // demote: {
-    //   description: 'Cek status host.',
-    //   handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-    //     return await message.reply(await sysinfo())
-    //   },
-    // },
+    promote: {
+      description: 'Cek status host.',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        return await message.reply(await sysinfo())
+      },
+    },
+    demote: {
+      description: 'Cek status host.',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        return await message.reply(await sysinfo())
+      },
+    },
     warn: {
       description: 'null. 👑',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
@@ -89,7 +89,7 @@ const WBT = {
         }
       },
     },
-  },
+  },*/
   'Menu Fun': {
     percent: {
       description: 'Seberapa persen keberuntungan kamu.',
@@ -215,6 +215,44 @@ const WBT = {
       },
     },
     */
+    brat: {
+      description: 'Brat generator,',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        const command = params.shift()
+        let realMsg = ''
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+          const msgQ = await message.getQuotedMessage()
+          realMsg = msgQ.body
+        } else if (params.length < 1) {
+          return await message.reply(useHelp([`${command} <text>`]))
+        } else {
+          const msg = message.body.split(' ')
+          msg.shift()
+          realMsg = msg.join(' ')
+        }
+        const brat = await client.pupBrowser?.newPage()
+        await brat?.goto('https://www.bratgenerator.com/')
+        await brat?.evaluate((realMsg) => {
+          const br = document.querySelector('#toggleButtonWhite') as HTMLDivElement
+          const ti = document.querySelector('#textInput') as HTMLInputElement
+          br.click()
+          ti.value = realMsg
+          ti.dispatchEvent(new Event('input', { bubbles: true }))
+        }, realMsg)
+        const div = await brat?.waitForSelector('#memeImage')
+        const screenshot = await div?.screenshot({
+          encoding: 'base64',
+          fromSurface: true,
+        })
+        if (typeof screenshot === 'string') {
+          // fs.writeFileSync('screenshot.png', Buffer.from(screenshot, 'base64'))
+          await brat?.close()
+          return await message.reply(new WAWebJS.MessageMedia('image/png', screenshot), undefined, {
+            sendMediaAsSticker: true,
+          })
+        }
+      },
+    },
     brot: {
       description: 'Brat ngabz',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {

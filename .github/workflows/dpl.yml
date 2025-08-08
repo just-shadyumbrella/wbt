@@ -1,6 +1,6 @@
 name: My workflow
 on:
-  #push:
+  push:
   workflow_run:
     workflows: ["Push Auth"]
     types:
@@ -10,7 +10,7 @@ on:
     - cron: 0 */6 * * *
 
 concurrency:
-  group: wbt
+  group: wbt_dev
   cancel-in-progress: true
 
 jobs:
