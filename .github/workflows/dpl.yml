@@ -1,6 +1,6 @@
 name: My workflow
 on:
-  push:
+  #push:
   workflow_run:
     workflows: ["Push Auth"]
     types:
