@@ -237,6 +237,8 @@ const WBT = {
         await brat?.evaluate((realMsg) => {
           const br = document.querySelector('#toggleButtonWhite') as HTMLDivElement
           const ti = document.querySelector('#textInput') as HTMLInputElement
+          const ov = document.querySelector('div#textOverlay') as HTMLDivElement
+          ov.style.padding = '2rem'
           br.click()
           ti.value = realMsg
           ti.dispatchEvent(new Event('input', { bubbles: true }))
