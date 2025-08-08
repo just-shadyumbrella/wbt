@@ -217,7 +217,7 @@ const WBT = {
     },
     */
     brat: {
-      description: 'Brat generator.',
+      description: 'Brat generator',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
@@ -366,7 +366,7 @@ const WBT = {
       },
     },
     sticker: {
-      description: 'Yups ngabz',
+      description: 'Ya stiker',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let mediaMsg = {} as WAWebJS.Message
