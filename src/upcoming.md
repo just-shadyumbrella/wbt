@@ -1,9 +1,12 @@
 *💎 Fitur-fitur yang direncanakan akan hadir:*
 
+*🔰 Menu Game:*
+- `/reqmabar` Request mabar publik atau roles tertentu.
+- `/rc` List redeem code aktif untuk beberapa game yang tersedia.
+
+
 *🔰 Menu Grup:*
 - `@roles` Mention member tertentu jadi lebih gampang.
-
-- `/reqmabar` Request mabar publik atau roles tertentu.
 
 - `/undelete` Mencoba merekam pesan yang dihapus.
 - `/welcome` Setel salam sambutan untuk member baru. 👑

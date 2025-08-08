@@ -1,11 +1,14 @@
 import fs from 'node:fs'
-import WAWebJS from 'whatsapp-web.js'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import WAWebJS, { MessageMedia } from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
-import { cai } from './db.js'
-import { extractFlatPhoneNumber, logger, LoggerType, ParsedCommand, PREFIX, sysinfo, useHelp } from './util.js'
 import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
-import path from 'node:path'
+import warn from './db/warn.js'
+import { logger, LoggerType } from './util/logger.js'
+import { pkg, sysinfo, tmpDir } from './util/si.js'
+import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage, getChat } from './util/wa.js'
 
 const math = create(all)
 const WBT = {
@@ -37,28 +40,57 @@ const WBT = {
       },
     },
   },
+  /*
   'Menu Grup (belum selesai)': {
-    // promote: {
-    //   description: 'Cek status host.',
-    //   handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-    //     return await message.reply(await sysinfo())
-    //   },
-    // },
-    // demote: {
-    //   description: 'Cek status host.',
-    //   handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-    //     return await message.reply(await sysinfo())
-    //   },
-    // },
-    kick: {
-      description: 'Keluarkan member. 👑',
+    promote: {
+      description: 'Cek status host.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
-        // params = params.map((e) => e.replace('@', ''))
-        // console.log(params)
-        return
+        return await message.reply(await sysinfo())
       },
     },
-  },
+    demote: {
+      description: 'Cek status host.',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        return await message.reply(await sysinfo())
+      },
+    },
+    warn: {
+      description: 'null. 👑',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        if (await isAdmin(message)) {
+          const command = params.shift()
+          if (params.length < 1)
+            return await message.reply(useHelp([`${command} <@mention> <level?>`, `[MESSAGE] ↩️ ${command} <level?>`]))
+          const who = await(async () => {
+            const expect = params[0]
+            const isLevel = Number(expect)
+            if (isNaN(isLevel)) {
+              if (expect.startsWith('@')) {
+                return expect.replace('@', '')
+              }
+            } else if (message.hasQuotedMsg) {
+              const msgQ = await message.getQuotedMessage()
+              return await extractFlatPhoneNumberFromMessage(msgQ)
+            }
+          })()
+          const level = Number(params[params.length - 1])
+          if (who && level) {
+            const { numbers } = await warn.get(message.id.remote)
+            numbers.
+          }
+        }
+      },
+    },
+    setwarn: {
+      description: 'null. 👑',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        if (await isAdmin(message)) {
+          warn.set({ chat_id: message.id.remote })
+          return await message.reply('Warn setup.')
+        }
+      },
+    },
+  },*/
   'Menu Fun': {
     percent: {
       description: 'Seberapa persen keberuntungan kamu.',
@@ -184,6 +216,45 @@ const WBT = {
       },
     },
     */
+    brat: {
+      description: 'Brat generator.',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        const command = params.shift()
+        let realMsg = ''
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+          const msgQ = await message.getQuotedMessage()
+          realMsg = msgQ.body
+        } else if (params.length < 1) {
+          return await message.reply(useHelp([`${command} <text>`]))
+        } else {
+          const msg = message.body.split(' ')
+          msg.shift()
+          realMsg = msg.join(' ')
+        }
+        const brat = await client.pupBrowser?.newPage()
+        await brat?.goto('https://www.bratgenerator.com/')
+        await brat?.evaluate((realMsg) => {
+          const br = document.querySelector('#toggleButtonWhite') as HTMLDivElement
+          const ti = document.querySelector('#textInput') as HTMLInputElement
+          br.click()
+          ti.value = realMsg
+          ti.dispatchEvent(new Event('input', { bubbles: true }))
+        }, realMsg)
+        const br = await brat?.waitForSelector('div#textOverlay')
+        const screenshot = await br?.screenshot({
+          encoding: 'base64',
+          fromSurface: true,
+        })
+        if (typeof screenshot === 'string') {
+          // fs.writeFileSync('screenshot.png', Buffer.from(screenshot, 'base64'))
+          await brat?.close()
+          return await message.reply(new WAWebJS.MessageMedia('image/png', screenshot), undefined, {
+            sendMediaAsSticker: true,
+          })
+        }
+      },
+    },
+    /*
     brot: {
       description: 'Brat ngabz',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
@@ -201,7 +272,7 @@ const WBT = {
         }
         const brat = await client.pupBrowser?.newPage()
         await brat?.setContent(
-          /* html */ `<div id="brat" style="background: white;display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
+          `<div id="brat" style="background: white;display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
         )
         await brat?.evaluate((realMsg) => {
           const div = document.querySelector('div#brat') as HTMLDivElement | null
@@ -234,9 +305,9 @@ const WBT = {
           })
         }
       },
-    },
-    crot: {
-      description: 'Brat kotak ngabz',
+    },*/
+    brot: {
+      description: 'Brat versi saya 😃',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
@@ -309,9 +380,23 @@ const WBT = {
         }
         if (mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          return await message.reply(media, undefined, { sendMediaAsSticker: true })
+          const name = parsed.flags['-n']
+          const author = parsed.flags['-a']
+          const category = parsed.flags['-c']
+          return await message.reply(media, undefined, {
+            sendMediaAsSticker: true,
+            stickerName: typeof name === 'string' ? name : `${pkg.name} v${pkg.version}`,
+            stickerAuthor: typeof author === 'string' ? author : 'github.com/just-shadyumbrella/wbt',
+            stickerCategories: typeof category === 'string' ? category.split(' ') : undefined,
+          })
         } else {
-          return await message.reply(useHelp([`[IMAGE|VIDEO] ${command}`, `[IMAGE|VIDEO] ↩️ ${command}`]))
+          return await message.reply(
+            useHelp([
+              `[IMAGE|VIDEO] ${command}`,
+              `[IMAGE|VIDEO] ↩️ ${command}`,
+              '[Experimental] Dapat dikirim via dokumen.',
+            ])
+          )
         }
       },
     },
@@ -356,7 +441,7 @@ const caiSettings = {
       const cmd = params[3]
       if (cmd === 'reset') {
         const char = params[2]
-        const key = `${extractFlatPhoneNumber(message.author || '')}:${char}:${message.id.remote}`
+        const key = `${await extractFlatPhoneNumberFromMessage(message)}:${char}:${message.id.remote}`
         history(key, [])
         return await message.reply(`Reset history for character: ${char}`)
       } else {
@@ -382,7 +467,7 @@ export const caiCommands = {
     handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
       params.shift()
       const result = await chatUsingHistory(
-        extractFlatPhoneNumber(message.author || ''),
+        await extractFlatPhoneNumberFromMessage(message),
         message.id.remote,
         'Shiina',
         params.join(' ')

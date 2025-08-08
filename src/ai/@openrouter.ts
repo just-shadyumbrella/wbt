@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import { config } from 'dotenv'
-import { logger, LoggerType } from '../util.js'
+import { logger, LoggerType } from '../util/logger.js'
 import Raiden from './raiden.js'
 import Wanderer from './wanderer.js'
 import Shiina from './shiina.js'

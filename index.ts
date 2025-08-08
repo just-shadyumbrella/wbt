@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import fs from 'node:fs'
@@ -12,6 +13,8 @@ import {
   PREFIX,
 } from './src/util.js'
 import commands, { caiCommands } from './src/commands.js'
+import { logger, LoggerType } from './src/util/logger.js'
+import { chromePath, PREFIX, parseArguments, parseArgumentsStructured, extractCommandFromPrefix, PHONE_NUMBER } from './src/util/wa.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -75,9 +78,13 @@ client.on('remote_session_saved', (message) =>
 )
 // client.on('message_revoke_everyone', (message) => console.log('Message revoked:', message))
 
-client.on('qr', (qr) => {
+
+client.on('qr', async (qr) => {
   console.log('Scan QR:')
   qrcode.generate(qr, { small: true })
+  if (PHONE_NUMBER) {
+    console.log('Pairing Code:', await client.requestPairingCode(PHONE_NUMBER))
+  }
 })
 
 client.on('message_create', async (message) => {
