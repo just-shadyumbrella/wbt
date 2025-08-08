@@ -1,4 +1,3 @@
-import fs from 'node:fs'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import fs from 'node:fs'
