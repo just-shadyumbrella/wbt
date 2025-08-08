@@ -7,7 +7,7 @@ import { readMore } from './wa.js'
 
 console.log('Gathering `package.json`...')
 console.time('Package information stored')
-const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')).toString())
+export const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')).toString())
 const bun = process.versions.bun,
   node = process.versions.node
 const versions = [
@@ -17,11 +17,14 @@ const versions = [
 ].filter((e) => e !== undefined)
 console.timeEnd('Package information stored')
 
-const tmpDir = path.join(process.cwd(), '.tmp')
-if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
+export function tmpDir() {
+  const tmpDir = path.join(process.cwd(), '.tmp')
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
+  return tmpDir
+}
 
 async function loadOrCache<T>(filename: string, getter: () => Promise<T>): Promise<T> {
-  const filePath = path.join(tmpDir, filename)
+  const filePath = path.join(tmpDir(), filename)
   if (fs.existsSync(filePath)) {
     try {
       const fileContent = await fs.promises.readFile(filePath, 'utf-8')

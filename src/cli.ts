@@ -61,3 +61,36 @@ export async function FFmpeg(pathOrBuffer: string | Buffer, args: string[]): Pro
     })
   })
 }
+
+
+export async function FFProbe(pathOrBuffer: string | Buffer, args: string[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const binary = 'ffprobe'
+    const resultChunks: Buffer[] = []
+    const inputIsBuffer = Buffer.isBuffer(pathOrBuffer)
+    if (!inputIsBuffer) args.unshift('-i', pathOrBuffer)
+      console.log(binary, args.join(' '))
+    const child = spawn(binary, [...args])
+    if (inputIsBuffer) {
+      child.stdin.write(pathOrBuffer)
+      child.stdin.end()
+    }
+    child.stdout.on('data', (chunk) => resultChunks.push(chunk))
+    child.stderr.on('data', (data) => {
+      const out = data.toString() as string
+      if (out.toLocaleLowerCase().includes('error')) {
+        console.error(out)
+      } else {
+        console.log(out)
+      }
+    })
+    child.on('error', reject)
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve(Buffer.concat(resultChunks))
+      } else {
+        reject(new Error(`FFmpeg exited with code ${code}`))
+      }
+    })
+  })
+}

@@ -1,13 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import WAWebJS from 'whatsapp-web.js'
+import crypto from 'node:crypto'
+import WAWebJS, { MessageMedia } from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
 import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
 import warn from './db/warn.js'
 import { logger, LoggerType } from './util/logger.js'
-import { sysinfo } from './util/si.js'
-import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage } from './util/wa.js'
+import { pkg, sysinfo, tmpDir } from './util/si.js'
+import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage, getChat } from './util/wa.js'
 
 const math = create(all)
 const WBT = {
@@ -216,7 +217,7 @@ const WBT = {
     },
     */
     brat: {
-      description: 'Brat generator,',
+      description: 'Brat generator.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
@@ -239,8 +240,8 @@ const WBT = {
           ti.value = realMsg
           ti.dispatchEvent(new Event('input', { bubbles: true }))
         }, realMsg)
-        const div = await brat?.waitForSelector('#memeImage')
-        const screenshot = await div?.screenshot({
+        const br = await brat?.waitForSelector('div#textOverlay')
+        const screenshot = await br?.screenshot({
           encoding: 'base64',
           fromSurface: true,
         })
@@ -253,6 +254,7 @@ const WBT = {
         }
       },
     },
+    /*
     brot: {
       description: 'Brat ngabz',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
@@ -270,7 +272,7 @@ const WBT = {
         }
         const brat = await client.pupBrowser?.newPage()
         await brat?.setContent(
-          /* html */ `<div id="brat" style="background: white;display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
+          `<div id="brat" style="background: white;display: flex;font-weight: 500;font-family: arial_narrowregular, 'Arial Narrow', sans-serif;font-size: 100px;filter: blur(2px);text-align: justify;text-align-last: justify;align-items: center;line-height: 1.25;padding: 1rem;"><span></span></div>`
         )
         await brat?.evaluate((realMsg) => {
           const div = document.querySelector('div#brat') as HTMLDivElement | null
@@ -303,9 +305,9 @@ const WBT = {
           })
         }
       },
-    },
-    crot: {
-      description: 'Brat kotak ngabz',
+    },*/
+    brot: {
+      description: 'Brat versi saya 😃',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
@@ -378,9 +380,23 @@ const WBT = {
         }
         if (mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          return await message.reply(media, undefined, { sendMediaAsSticker: true })
+          const name = parsed.flags['-n']
+          const author = parsed.flags['-a']
+          const category = parsed.flags['-c']
+          return await message.reply(media, undefined, {
+            sendMediaAsSticker: true,
+            stickerName: typeof name === 'string' ? name : `${pkg.name} v${pkg.version}`,
+            stickerAuthor: typeof author === 'string' ? author : 'github.com/just-shadyumbrella/wbt',
+            stickerCategories: typeof category === 'string' ? category.split(' ') : undefined,
+          })
         } else {
-          return await message.reply(useHelp([`[IMAGE|VIDEO] ${command}`, `[IMAGE|VIDEO] ↩️ ${command}`]))
+          return await message.reply(
+            useHelp([
+              `[IMAGE|VIDEO] ${command}`,
+              `[IMAGE|VIDEO] ↩️ ${command}`,
+              '[Experimental] Dapat dikirim via dokumen.',
+            ])
+          )
         }
       },
     },
