@@ -231,6 +231,7 @@ const WBT = {
           msg.shift()
           realMsg = msg.join(' ')
         }
+        realMsg = realMsg.replace(/\n/g, ' ')
         const brat = await client.pupBrowser?.newPage()
         await brat?.goto('https://www.bratgenerator.com/')
         await brat?.evaluate((realMsg) => {
