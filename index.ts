@@ -1,6 +1,7 @@
+import fs from 'node:fs'
+import os from 'node:os'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
-import os from 'node:os'
 import commands, { caiCommands } from './src/commands.js'
 import { logger, LoggerType } from './src/util/logger.js'
 import { chromePath, PREFIX, parseArguments, parseArgumentsStructured, extractCommandFromPrefix, PHONE_NUMBER } from './src/util/wa.js'
