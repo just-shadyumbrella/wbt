@@ -36,7 +36,7 @@ jobs:
 
       - name: Environment
         run: |
-          echo "${{ github.ref == 'ref/heads/main' && secrets.ENV || secrets.ENV_DEPLOY }}" | base64 -d > .env
+          echo "${{ secrets.ENV_DEV }}" | base64 -d > .env
 
       - name: Bun
         run: bun install;bun run .
