@@ -1,6 +1,7 @@
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import fs from 'node:fs'
+import os from 'node:os'
 import {
   chromePath,
   extractCommandFromPrefix,
@@ -129,10 +130,19 @@ async function main() {
   }
 }
 
-setTimeout(async () => {
-  logger(LoggerType.WARN, { name, fn: 'setTimeout', context: 'destroy' }, 'Shutting down due to timeout...')
-  await client.destroy()
-  process.exit(0)
-}, 5 * 60 * 60 * 1000 + 55 * 60 * 1000) // Maximum 5:55
+// setTimeout(async () => {
+//   logger(LoggerType.WARN, { name, fn: 'setTimeout', context: 'destroy' }, 'Shutting down due to timeout...')
+//   await client.destroy()
+//   process.exit(0)
+// }, 5 * 60 * 60 * 1000 + 55 * 60 * 1000) // Maximum 5:55
+
+setInterval(async () => {
+  const limitSeconds = 60 * 60 * 5 + 60 * 55 // 5:55
+  if (os.uptime() >= limitSeconds) {
+    logger(LoggerType.WARN, { name, fn: 'setTimeout', context: 'destroy' }, 'Shutting down due to timeout...')
+    await client.destroy()
+    process.exit(0)
+  }
+}, 30000)
 
 main()
