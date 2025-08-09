@@ -29,6 +29,8 @@ jobs:
         run: rclone sync cloud:tokens ./tokens
 
       - uses: AnimMouse/setup-ffmpeg@v1
+        
+      - uses: AnimMouse/setup-yt-dlp@v3
 
       - uses: oven-sh/setup-bun@v2
         with:

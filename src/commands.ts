@@ -9,6 +9,7 @@ import warn from './db/warn.js'
 import { logger, LoggerType } from './util/logger.js'
 import { pkg, sysinfo, tmpDir } from './util/si.js'
 import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage, getChat } from './util/wa.js'
+import { YTdlp } from './cli.js'
 
 const math = create(all)
 const WBT = {
@@ -135,6 +136,40 @@ const WBT = {
         return await message.reply(math.evaluate(params.join(' ')).toString())
       },
     },
+    tomedia: {
+      description: 'Ubah link jadi media WhatsApp.',
+      handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
+        const command = params.shift()
+        let link = ''
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+          const msgQ = await message.getQuotedMessage()
+          link = msgQ.links[0].link
+        } else if (params.length < 1) {
+          return await message.reply(useHelp([`${command} [hd] [<number: resolution>] ↩️? <link>`]))
+        } else {
+          link = message.links[0].link
+        }
+        try {
+          const resolution = (() => {
+            for (const arg in parsed.positional) {
+              const n = Number(arg)
+              if (!isNaN(n)) return n
+            }
+          })()
+          const filepath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString())
+          const args = resolution
+            ? `-f "bv[height<=${resolution}]+ba/b[height<=${resolution}]" --merge-output-format mkv -o ${filepath}`
+            : `-f "bv+ba/b" --merge-output-format mkv -o ${filepath}`
+          await YTdlp(link, args.split(' '))
+          const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filepath)
+          return await message.reply('_Info menyusul..._', undefined, {
+            media: mediaUpload,
+          })
+        } catch (error) {
+          throw error
+        }
+      },
+    },
     /*
     waq: {
       description: 'Whatsapp sticker',
@@ -217,7 +252,7 @@ const WBT = {
     },
     */
     brat: {
-      description: 'Brat generator',
+      description: 'Brat generator.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
@@ -225,7 +260,7 @@ const WBT = {
           const msgQ = await message.getQuotedMessage()
           realMsg = msgQ.body
         } else if (params.length < 1) {
-          return await message.reply(useHelp([`${command} <text>`]))
+          return await message.reply(useHelp([`${command} ↩️? <text>`]))
         } else {
           const msg = message.body.split(' ')
           msg.shift()
@@ -233,7 +268,7 @@ const WBT = {
         }
         realMsg = realMsg.replace(/\n/g, ' ')
         const brat = await client.pupBrowser?.newPage()
-        await brat?.goto('https://www.bratgenerator.com/')
+        await brat?.goto('https://www.bratgenerator.com')
         await brat?.evaluate((realMsg) => {
           const br = document.querySelector('#toggleButtonWhite') as HTMLDivElement
           const ti = document.querySelector('#textInput') as HTMLInputElement
@@ -310,7 +345,7 @@ const WBT = {
       },
     },*/
     brot: {
-      description: 'Brat versi saya 😃',
+      description: 'Brat generator versi saya. 😃',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
         let realMsg = ''
@@ -318,7 +353,7 @@ const WBT = {
           const msgQ = await message.getQuotedMessage()
           realMsg = msgQ.body
         } else if (params.length < 1) {
-          return await message.reply(useHelp([`${command} <text>`]))
+          return await message.reply(useHelp([`${command} ↩️? <text>`]))
         } else {
           const msg = message.body.split(' ')
           msg.shift()
@@ -369,10 +404,10 @@ const WBT = {
       },
     },
     sticker: {
-      description: 'Ya stiker',
+      description: 'Pembuat stiker.',
       handler: async (message: WAWebJS.Message, params: string[], parsed: ParsedCommand) => {
         const command = params.shift()
-        let mediaMsg = {} as WAWebJS.Message
+        let mediaMsg: WAWebJS.Message | null = null
         if (message.hasMedia) {
           mediaMsg = message
         } else if (message.hasQuotedMsg) {
@@ -394,11 +429,16 @@ const WBT = {
           })
         } else {
           return await message.reply(
-            useHelp([
-              `[IMAGE|VIDEO] ${command}`,
-              `[IMAGE|VIDEO] ↩️ ${command}`,
-              '[Experimental] Dapat dikirim via dokumen.',
-            ])
+            useHelp(
+              [`[IMAGE|VIDEO] ↩️? ${command} [-a "<text>"] [-n "<text>"] [-c "...<emoji>"]`],
+              `*📝 Argumen*
+
+\`-a\` Author (teks kiri)
+\`-n\` Nama (teks kanan)
+\`-c\` Kategori (tag emoji stiker untuk memudahkan pencarian)
+
+\`Experimental\` Dapat dikirim via dokumen.`
+            )
           )
         }
       },
