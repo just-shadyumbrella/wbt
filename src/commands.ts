@@ -151,7 +151,7 @@ const WBT = {
         }
         try {
           const filepath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
-          await YTdlp(link, `yt-dlp --merge-output-format mkv -o ${filepath}`.split(' '))
+          await YTdlp(link, `--merge-output-format mkv -o ${filepath}`.split(' '))
           const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filepath)
           return await message.reply('_Info menyusul..._', undefined, {
             media: mediaUpload,
