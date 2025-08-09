@@ -160,7 +160,8 @@ const WBT = {
           const args = resolution
             ? `-f "bv[height<=${resolution}]+ba/b[height<=${resolution}]" --merge-output-format mkv -o ${filepath}`
             : `-f "bv+ba/b" --merge-output-format mkv -o ${filepath}`
-          await YTdlp(link, args.split(' '))
+          // await YTdlp(link, args.split(' '))
+          await YTdlp(link, `yt-dlp -f "bv+ba/b" --merge-output-format mkv -o ${filepath}`.split(' '))
           const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filepath)
           return await message.reply('_Info menyusul..._', undefined, {
             media: mediaUpload,
