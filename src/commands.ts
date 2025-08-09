@@ -156,7 +156,7 @@ const WBT = {
               if (!isNaN(n)) return n
             }
           })()
-          const filepath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString())
+          const filepath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
           const args = resolution
             ? `-f "bv[height<=${resolution}]+ba/b[height<=${resolution}]" --merge-output-format mkv -o ${filepath}`
             : `-f "bv+ba/b" --merge-output-format mkv -o ${filepath}`
