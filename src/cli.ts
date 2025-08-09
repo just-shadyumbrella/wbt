@@ -96,7 +96,6 @@ export async function FFProbe(pathOrBuffer: string | Buffer, args: string[]): Pr
 export async function YTdlp(link: string, args: string[]) {
   return new Promise((resolve, reject) => {
     const binary = 'yt-dlp'
-    console.log(binary, [...args, link])
     const child = spawn(binary, [...args, link])
     child.stderr.on('data', (data) => {
       const out = data.toString() as string
