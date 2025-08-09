@@ -31,6 +31,14 @@ jobs:
       - uses: AnimMouse/setup-ffmpeg@v1
         
       - uses: AnimMouse/setup-yt-dlp@v3
+        
+
+      - uses: browser-actions/setup-chrome@v2
+        id: setup-chrome
+        with:
+          install-chromedriver: true
+      - run: |
+          echo ${{ steps.setup-chrome.outputs.chrome-path }} > chrome-path.txt
 
       - uses: oven-sh/setup-bun@v2
         with:
