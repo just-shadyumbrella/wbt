@@ -1,6 +1,7 @@
 import fs from 'node:fs'
-import { config } from 'dotenv'
+import path from 'node:path'
 import WAWebJS from 'whatsapp-web.js'
+import { config } from 'dotenv'
 
 config()
 
@@ -27,7 +28,6 @@ export function blushReact(index?: number) {
   const blush = ['\\(⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)/', '(｡•́‿•̀｡)', '(｡^‿^｡)', '(//ω//)', '(≧◡≦)', '(>///<)']
   return blush[index || Math.floor(Math.random() * blush.length)]
 }
-
 
 export function parseArguments(input: string, prefix: string[] = [PREFIX]) {
   function processEscapes(str: string) {
@@ -142,14 +142,17 @@ export function useHelp(commandInstructions: string[], description?: string) {
 /* WA Utils */
 
 export function chromePath() {
-  if (process.platform === 'win32') {
-    const win_chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
-    try {
+  try {
+    if (process.platform === 'win32') {
+      const win_chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
       const stat = fs.statSync(win_chrome)
       if (stat.isFile()) return win_chrome
-    } catch (err) {
-      console.error(err)
     }
+    const chrome_path = fs.readFileSync(path.join(process.cwd(), 'chrome-path.txt')).toString().trim()
+    const stat = fs.statSync(chrome_path)
+    if (stat.isFile()) return chrome_path
+  } catch (err) {
+    console.error(err)
   }
 }
 
@@ -176,7 +179,7 @@ export async function isAdmin(message: WAWebJS.Message) {
   const admins = await getGroupAdmins(message)
   if (admins) {
     for (const admin of admins) {
-      if (admin.id._serialized === (getAuthor(message))) return true
+      if (admin.id._serialized === getAuthor(message)) return true
     }
   }
   return false
