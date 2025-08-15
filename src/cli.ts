@@ -112,7 +112,7 @@ export async function YTdlp(link: string, args: string[]): Promise<Buffer> {
       if (code === 0) {
         resolve(Buffer.concat(resultChunks))
       } else {
-        reject(new Error(`FFProbe exited with code ${code}`))
+        reject(new Error(`YTdlp exited with code ${code}`))
       }
     })
   })
