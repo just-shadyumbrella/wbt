@@ -11,5 +11,5 @@ jobs:
     name: My Job
     runs-on: ubuntu-latest
     steps:
-      - name: 'Loading'
+      - name: Loading
         run: sleep 1
