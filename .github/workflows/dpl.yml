@@ -33,9 +33,9 @@ jobs:
       - uses: AnimMouse/setup-yt-dlp@v3
 
       - uses: browser-actions/setup-chrome@v2
-        id: setup-chrome
         with:
           install-chromedriver: true
+        id: setup-chrome
       - run: |
           echo ${{ steps.setup-chrome.outputs.chrome-path }} > chrome-path.txt
 

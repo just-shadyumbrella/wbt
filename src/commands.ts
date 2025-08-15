@@ -156,7 +156,10 @@ const WBT = {
           const mediaUpload = MessageMedia.fromFilePath(filePath)
           mediaUpload.mimetype = 'video/mp4'
           const J = JSON.parse((await YTdlp(link, ['-J'])).toString())
-          return await message.reply(mediaUpload, undefined, { caption: `*Author:* ${J.artist}
+          return await message.reply(mediaUpload, undefined, {
+            caption: `🔮 ${J.extractor}
+
+*Author:* ${J.artist}
 *Upload:* ${J.upload_date}
 *Views:* ${J.view_count}
 *Likes:* ${J.like_count}
