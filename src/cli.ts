@@ -93,18 +93,12 @@ export async function FFProbe(pathOrBuffer: string | Buffer, args: string[]): Pr
   })
 }
 
-export async function YTdlp(link: string, args: string[]) {
+export async function YTdlp(link: string, args: string[]): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const binary = 'yt-dlp'
+    const resultChunks: Buffer[] = []
     const child = spawn(binary, [link, ...args])
-    child.stdout.on('data', (data) => {
-      const out = data.toString() as string
-      if (out.toLocaleLowerCase().includes('error')) {
-        console.error(out)
-      } else {
-        console.log(out)
-      }
-    })
+    child.stdout.on('data', (chunk) => resultChunks.push(chunk))
     child.stderr.on('data', (data) => {
       const out = data.toString() as string
       if (out.toLocaleLowerCase().includes('error')) {
@@ -116,9 +110,9 @@ export async function YTdlp(link: string, args: string[]) {
     child.on('error', reject)
     child.on('close', (code) => {
       if (code === 0) {
-        resolve(void(0))
+        resolve(Buffer.concat(resultChunks))
       } else {
-        reject(new Error(`YTdlp exited with code ${code}`))
+        reject(new Error(`FFProbe exited with code ${code}`))
       }
     })
   })
