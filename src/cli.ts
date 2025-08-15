@@ -87,7 +87,7 @@ export async function FFProbe(pathOrBuffer: string | Buffer, args: string[]): Pr
       if (code === 0) {
         resolve(Buffer.concat(resultChunks))
       } else {
-        reject(new Error(`FFmpeg exited with code ${code}`))
+        reject(new Error(`FFProbe exited with code ${code}`))
       }
     })
   })
@@ -96,7 +96,7 @@ export async function FFProbe(pathOrBuffer: string | Buffer, args: string[]): Pr
 export async function YTdlp(link: string, args: string[]) {
   return new Promise((resolve, reject) => {
     const binary = 'yt-dlp'
-    const child = spawn(binary, [...args, link])
+    const child = spawn(binary, [link, ...args])
     child.stdout.on('data', (data) => {
       const out = data.toString() as string
       if (out.toLocaleLowerCase().includes('error')) {
@@ -118,7 +118,7 @@ export async function YTdlp(link: string, args: string[]) {
       if (code === 0) {
         resolve(void(0))
       } else {
-        reject(new Error(`FFmpeg exited with code ${code}`))
+        reject(new Error(`YTdlp exited with code ${code}`))
       }
     })
   })

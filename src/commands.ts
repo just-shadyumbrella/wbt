@@ -154,22 +154,25 @@ const WBT = {
           const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
           await YTdlp(
             link,
-            `-f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]/best" --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
+            `-f bv[vcodec^=avc1]+ba[acodec^=mp4a]/b[vcodec^=avc1][acodec^=mp4a]/b --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
               ' '
             )
           )
           console.log((await FFProbe(filePath, [])).toString())
-          const fileType = await fileTypeFromFile(filePath)
-          if (fileType) {
-            const mediaUpload = new WAWebJS.MessageMedia(
-              fileType.mime,
-              Buffer.from(fs.readFileSync(filePath)).toString('base64')
-            )
-            console.log('media:', mediaUpload)
-            return await message.reply(mediaUpload, undefined, {
-              caption: '_Info menyusul..._',
-            })
-          }
+          return await message.reply(WAWebJS.MessageMedia.fromFilePath(filePath), undefined, {
+            caption: '_Info menyusul..._',
+          })
+          // const fileType = await fileTypeFromFile(filePath)
+          // if (fileType) {
+          //   const mediaUpload = new WAWebJS.MessageMedia(
+          //     fileType.mime,
+          //     Buffer.from(fs.readFileSync(filePath)).toString('base64')
+          //   )
+          //   console.log('media:', mediaUpload)
+          //   return await message.reply(mediaUpload, undefined, {
+          //     caption: '_Info menyusul..._',
+          //   })
+          // }
         } catch (error) {
           throw error
         }
