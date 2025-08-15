@@ -10,7 +10,7 @@ import warn from './db/warn.js'
 import { logger, LoggerType } from './util/logger.js'
 import { pkg, sysinfo, tmpDir } from './util/si.js'
 import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage, getChat } from './util/wa.js'
-import { YTdlp } from './cli.js'
+import { FFProbe, YTdlp } from './cli.js'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
@@ -151,13 +151,14 @@ const WBT = {
           link = message.links[0].link
         }
         try {
-          const filepath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
-          await YTdlp(link, `--merge-output-format mkv -o ${filepath}`.split(' '))
-          const fileType = await fileTypeFromFile(filepath)
+          const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
+          await YTdlp(link, `--merge-output-format mkv -o ${filePath}`.split(' '))
+          console.log((await FFProbe(filePath, [])).toString())
+          const fileType = await fileTypeFromFile(filePath)
           if (fileType) {
             const mediaUpload = new WAWebJS.MessageMedia(
               fileType.mime,
-              Buffer.from(fs.readFileSync(filepath)).toString('base64')
+              Buffer.from(fs.readFileSync(filePath)).toString('base64')
             )
             console.log('media:', mediaUpload)
             return await message.reply(mediaUpload, undefined, {
