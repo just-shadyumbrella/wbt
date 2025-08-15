@@ -2,7 +2,7 @@ name: My workflow
 on:
   push:
   workflow_run:
-    workflows: ["Push Auth", "My workflow"]
+    workflows: ["Push Auth"]
     types:
       - completed
   workflow_dispatch:
