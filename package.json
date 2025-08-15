@@ -28,7 +28,7 @@
     "toad-cache": "^3.7.0",
     "type-fest": "^4.41.0",
     "waddler": "^0.0.12",
-    "whatsapp-web.js": "1.31.1-alpha.0"
+    "whatsapp-web.js": "1.32.0"
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.27",
