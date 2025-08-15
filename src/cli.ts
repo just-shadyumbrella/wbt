@@ -97,6 +97,14 @@ export async function YTdlp(link: string, args: string[]) {
   return new Promise((resolve, reject) => {
     const binary = 'yt-dlp'
     const child = spawn(binary, [...args, link])
+    child.stdout.on('data', (data) => {
+      const out = data.toString() as string
+      if (out.toLocaleLowerCase().includes('error')) {
+        console.error(out)
+      } else {
+        console.log(out)
+      }
+    })
     child.stderr.on('data', (data) => {
       const out = data.toString() as string
       if (out.toLocaleLowerCase().includes('error')) {

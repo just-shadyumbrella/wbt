@@ -152,7 +152,12 @@ const WBT = {
         }
         try {
           const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
-          await YTdlp(link, `--merge-output-format mkv -o ${filePath}`.split(' '))
+          await YTdlp(
+            link,
+            `-f "bv[vcodec^=avc1]+ba[acodec^=mp4a]/best[ext=mp4]" --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
+              ' '
+            )
+          )
           console.log((await FFProbe(filePath, [])).toString())
           const fileType = await fileTypeFromFile(filePath)
           if (fileType) {
