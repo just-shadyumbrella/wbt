@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import WAWebJS, { MessageMedia } from 'whatsapp-web.js'
+import { fileTypeFromFile } from 'file-type'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
 import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
@@ -11,7 +12,7 @@ import { pkg, sysinfo, tmpDir } from './util/si.js'
 import { ParsedCommand, PREFIX, isAdmin, useHelp, extractFlatPhoneNumberFromMessage, getChat } from './util/wa.js'
 import { YTdlp } from './cli.js'
 
-const math = create(all)
+const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
   'Menu Utama': {
     start: {
@@ -150,12 +151,18 @@ const WBT = {
           link = message.links[0].link
         }
         try {
-          const filepath = path.join(process.cwd(), '.tmp', `${crypto.randomBytes(16).toString('hex')}.mkv`)
+          const filepath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
           await YTdlp(link, `--merge-output-format mkv -o ${filepath}`.split(' '))
-          const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filepath)
-          return await message.reply(mediaUpload, undefined, {
-            caption: '_Info menyusul..._',
-          })
+          const fileType = await fileTypeFromFile(filepath)
+          if (fileType) {
+            const mediaUpload = new WAWebJS.MessageMedia(
+              fileType.mime,
+              Buffer.from(fs.readFileSync(filepath)).toString('base64')
+            )
+            return await message.reply(mediaUpload, undefined, {
+              caption: '_Info menyusul..._',
+            })
+          }
         } catch (error) {
           throw error
         }
