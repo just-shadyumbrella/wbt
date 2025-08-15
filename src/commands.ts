@@ -152,12 +152,7 @@ const WBT = {
         }
         try {
           const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
-          await YTdlp(
-            link,
-            `-f bv[vcodec^=avc1]+ba[acodec^=mp4a]/b[vcodec^=avc1][acodec^=mp4a]/b --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
-              ' '
-            )
-          )
+          await YTdlp(link, `-f [vcodec=h264] --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(' '))
           const mediaUpload = MessageMedia.fromFilePath(filePath)
           mediaUpload.mimetype = 'video/mp4'
           return await client.sendMessage(message.id.remote, mediaUpload, { caption: 'Teste' })
