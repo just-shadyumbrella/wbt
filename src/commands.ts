@@ -151,7 +151,7 @@ const WBT = {
           link = message.links[0].link
         }
         try {
-          const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
+          const filePath = path.join(process.cwd(), '.tmp', `${crypto.randomBytes(16).toString('hex')}.mp4`)
           await YTdlp(
             link,
             `-f bv[vcodec^=avc1]+ba[acodec^=mp4a]/b[vcodec^=avc1][acodec^=mp4a]/b --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
@@ -159,21 +159,9 @@ const WBT = {
             )
           )
           const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filePath)
-          mediaUpload.mimetype = 'video/mp4'
           return await message.reply(mediaUpload, undefined, {
             caption: '_Info menyusul..._',
           })
-          // const fileType = await fileTypeFromFile(filePath)
-          // if (fileType) {
-          //   const mediaUpload = new WAWebJS.MessageMedia(
-          //     fileType.mime,
-          //     Buffer.from(fs.readFileSync(filePath)).toString('base64')
-          //   )
-          //   console.log('media:', mediaUpload)
-          //   return await message.reply(mediaUpload, undefined, {
-          //     caption: '_Info menyusul..._',
-          //   })
-          // }
         } catch (error) {
           throw error
         }
