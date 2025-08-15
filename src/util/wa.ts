@@ -150,7 +150,6 @@ export function chromePath() {
     }
     const chrome_path = fs.readFileSync(path.join(process.cwd(), 'chrome-path.txt')).toString().trim()
     const stat = fs.statSync(chrome_path)
-    console.log('Chrome path:', chrome_path)
     if (stat.isFile()) return chrome_path
   } catch (err) {
     console.error(err)
