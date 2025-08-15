@@ -67,7 +67,7 @@ export async function FFProbe(pathOrBuffer: string | Buffer, args: string[]): Pr
     const binary = 'ffprobe'
     const resultChunks: Buffer[] = []
     const inputIsBuffer = Buffer.isBuffer(pathOrBuffer)
-    if (!inputIsBuffer) args.unshift('-i', pathOrBuffer)
+    if (!inputIsBuffer) args.unshift(pathOrBuffer)
     const child = spawn(binary, [...args])
     if (inputIsBuffer) {
       child.stdin.write(pathOrBuffer)
