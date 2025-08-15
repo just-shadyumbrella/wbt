@@ -154,15 +154,15 @@ const WBT = {
           const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
           await YTdlp(link, `-f [vcodec=h264] --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(' '))
           const mediaUpload = MessageMedia.fromFilePath(filePath)
+          mediaUpload.mimetype = 'video/mp4'
           const J = JSON.parse((await YTdlp(link, ['-J'])).toString())
-          return await message.reply(mediaUpload, undefined, {
-            caption: `*Author:* ${J.artist}
-*Description:* ${J.description}
+          return await message.reply(mediaUpload, undefined, { caption: `*Author:* ${J.artist}
 *Upload:* ${J.upload_date}
 *Views:* ${J.view_count}
 *Likes:* ${J.like_count}
 *Comments:* ${J.comment_count}
 *Repost:* ${J.repost_count}
+*Description:* ${J.description}
 `,
           })
         } catch (error) {
