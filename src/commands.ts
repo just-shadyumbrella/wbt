@@ -152,7 +152,7 @@ const WBT = {
         }
         try {
           const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
-          await YTdlp(link, `-f [vcodec=h264] --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(' '))
+          await YTdlp(link, `-f [vcodec=h264]/b --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(' '))
           const mediaUpload = MessageMedia.fromFilePath(filePath)
           mediaUpload.mimetype = 'video/mp4'
           const J = JSON.parse((await YTdlp(link, ['-J'])).toString())
@@ -162,8 +162,7 @@ const WBT = {
 *Likes:* ${J.like_count}
 *Comments:* ${J.comment_count}
 *Repost:* ${J.repost_count}
-*Description:* ${J.description}
-`,
+*Description:* ${J.description}`,
           })
         } catch (error) {
           throw error
