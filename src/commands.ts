@@ -155,6 +155,7 @@ const WBT = {
           await YTdlp(link, `--merge-output-format mkv -o ${filepath}`.split(' '))
           const fileType = await fileTypeFromFile(filepath)
           if (fileType) {
+            console.log('fileType:', fileType)
             const mediaUpload = new WAWebJS.MessageMedia(
               fileType.mime,
               Buffer.from(fs.readFileSync(filepath)).toString('base64')
