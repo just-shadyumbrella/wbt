@@ -154,7 +154,7 @@ const WBT = {
           const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
           await YTdlp(
             link,
-            `-f "bv[vcodec^=avc1]+ba[acodec^=mp4a]/best[ext=mp4]" --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
+            `-f "bestvideo[vcodec^=avc1]+bestaudio[acodec^=mp4a]/best[vcodec^=avc1][acodec^=mp4a]/best" --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
               ' '
             )
           )
