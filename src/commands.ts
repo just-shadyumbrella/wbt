@@ -151,17 +151,16 @@ const WBT = {
           link = message.links[0].link
         }
         try {
-          const filePath = path.join(process.cwd(), '.tmp', `${crypto.randomBytes(16).toString('hex')}.mp4`)
+          const filePath = path.join(process.cwd(), '.tmp', crypto.randomBytes(16).toString('hex'))
           await YTdlp(
             link,
             `-f bv[vcodec^=avc1]+ba[acodec^=mp4a]/b[vcodec^=avc1][acodec^=mp4a]/b --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(
               ' '
             )
           )
-          const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filePath)
-          return await message.reply(mediaUpload, undefined, {
-            caption: '_Info menyusul..._',
-          })
+          const mediaUpload = MessageMedia.fromFilePath(filePath)
+          mediaUpload.mimetype = 'video/mp4'
+          return await client.sendMessage(message.id.remote, mediaUpload, { caption: 'Teste' })
         } catch (error) {
           throw error
         }
