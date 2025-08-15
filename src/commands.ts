@@ -158,8 +158,9 @@ const WBT = {
               ' '
             )
           )
-          console.log((await FFProbe(filePath, [])).toString())
-          return await message.reply(WAWebJS.MessageMedia.fromFilePath(filePath), undefined, {
+          const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filePath)
+          mediaUpload.mimetype = 'video/mp4'
+          return await message.reply(mediaUpload, undefined, {
             caption: '_Info menyusul..._',
           })
           // const fileType = await fileTypeFromFile(filePath)
