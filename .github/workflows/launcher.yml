@@ -1,0 +1,15 @@
+name: Launcher
+on:
+  workflow_run:
+    workflows: ["My workflow"]
+    types:
+      - completed
+
+
+jobs:
+  job:
+    name: My Job
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Loading'
+        run: sleep 1
