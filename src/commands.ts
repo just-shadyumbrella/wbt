@@ -6,8 +6,6 @@ import ky from 'ky'
 import WAWebJS from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { client } from '../index.js'
-import { chars, chat, chatUsingHistory, history, memorySlotLimit } from './ai/@openrouter.js'
-import warn from './db/warn.js'
 import { logger, LoggerType } from './util/logger.js'
 import { pkg, sysinfo, tmpDir } from './util/si.js'
 import {
@@ -23,7 +21,6 @@ import {
   getGroupParticipants,
   getGroupAdmins,
   getGroupMembers,
-  getParticipantsId,
   filterMyselfFromParticipants,
 } from './util/wa.js'
 import { YTdlp } from './cli.js'

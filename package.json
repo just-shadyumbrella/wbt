@@ -1,6 +1,6 @@
 {
   "name": "wbt",
-  "version": "0.1.7-beta.2",
+  "version": "0.1.8-beta",
   "description": "WBT WBt Wbt wbt",
   "type": "module",
   "main": "index.ts",
@@ -32,10 +32,12 @@
     "whatsapp-web.js": "1.32.0"
   },
   "devDependencies": {
+    "file-type": "^21.0.0",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/qrcode-terminal": "^0.12.2",
     "ls-engines": "^0.9.3",
     "npm-check": "^6.0.1",
+    "puppeteer": "^24.17.0",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   },

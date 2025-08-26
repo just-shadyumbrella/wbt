@@ -11,7 +11,6 @@ import {
   PHONE_NUMBER,
   extractMentions,
   readMore,
-  extractFlatId,
   getParticipantsId,
   filterMyselfFromParticipants,
 } from './src/util/wa.js'
