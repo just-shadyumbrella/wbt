@@ -27,7 +27,7 @@ jobs:
 
       - name: Environment
         run: |
-          echo "${{ secrets.ENV }}" | base64 -d > .env
+          echo "${{ secrets.ENV_DEV }}" | base64 -d > .env
 
       - name: Bun
         run: bun i --production;bun run . pushauth

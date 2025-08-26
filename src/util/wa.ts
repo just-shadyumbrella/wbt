@@ -79,7 +79,7 @@ export type ParsedCommand = {
 
 export function parseArgumentsStructured(input: string, prefix = [PREFIX]): ParsedCommand | undefined {
   const tokens = tokenize(input.trim())
-  if (tokens.length && isValidPrefix(input)) {
+  if (tokens.length && isValidPrefix(input, prefix)) {
     const [command, ...args] = tokens
     const flags: Record<string, string | boolean> = {}
     const positional: string[] = []
@@ -159,7 +159,7 @@ export async function getAuthorId(message: WAWebJS.Message, toCUS = true, flat =
 /**
  * No lid
  */
-export async function getGroupParticipants(message: WAWebJS.Message, toId?: keyof WAWebJS.ContactId) {
+export async function getGroupParticipants(message: WAWebJS.Message) {
   const chat = (await message.getChat()) as GroupChat
   return chat.isGroup ? chat.participants : []
 }
@@ -174,7 +174,10 @@ export async function getGroupMembers(message: WAWebJS.Message) {
   return participants.length ? participants.filter((e) => !e.isAdmin || !e.isSuperAdmin) : []
 }
 
-export function getParticipantsId(participants: WAWebJS.GroupParticipant[], to: keyof WAWebJS.ContactId = '_serialized') {
+export function getParticipantsId(
+  participants: WAWebJS.GroupParticipant[],
+  to: keyof WAWebJS.ContactId = '_serialized'
+) {
   return participants.map((e) => e.id[to])
 }
 
@@ -209,19 +212,21 @@ export async function checkIsMyselfAdmin(message: WAWebJS.Message) {
 export async function filterMyselfFromParticipants(participants: string[], replaceWith?: string) {
   const me = (await client.getContactLidAndPhone([`${PHONE_NUMBER}@c.us`]))[0]
   let myselfThere = false
-  const filtered = replaceWith ? participants.map(e => {
-    if (e === me.pn || e === me.lid || e === PHONE_NUMBER) {
-      myselfThere = true
-      return replaceWith
-    }
-    return e
-  }) : participants.filter((e) => {
-    if (e === me.pn || e === me.lid || e === PHONE_NUMBER) {
-      myselfThere = true
-      return false
-    }
-    return true
-  })
+  const filtered = replaceWith
+    ? participants.map((e) => {
+        if (e === me.pn || e === me.lid || e === PHONE_NUMBER) {
+          myselfThere = true
+          return replaceWith
+        }
+        return e
+      })
+    : participants.filter((e) => {
+        if (e === me.pn || e === me.lid || e === PHONE_NUMBER) {
+          myselfThere = true
+          return false
+        }
+        return true
+      })
   return { participants: filtered, myselfThere }
 }
 
