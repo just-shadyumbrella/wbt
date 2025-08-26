@@ -32,14 +32,16 @@
     "whatsapp-web.js": "1.32.0"
   },
   "devDependencies": {
-    "file-type": "^21.0.0",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/qrcode-terminal": "^0.12.2",
+    "abot-scraper": "^1.6.2",
+    "file-type": "^21.0.0",
     "ls-engines": "^0.9.3",
     "npm-check": "^6.0.1",
     "puppeteer": "^24.17.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "upscale-x": "^1.0.0"
   },
   "engines": {
     "node": ">= 20"

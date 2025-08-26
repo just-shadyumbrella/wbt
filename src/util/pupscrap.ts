@@ -2,34 +2,6 @@ import { client } from '../../index.js'
 
 type Browser = typeof client.pupBrowser
 
-export async function enhancePhoto(browser: Browser, filePath: string) {
-  if (browser) {
-    const page = await browser.newPage()
-    await page.goto('https://pxpic.com/enhance-photos-quality')
-    const file = await page.waitForSelector('input[type=file]')
-    if (file) {
-      //@ts-expect-error
-      await file.uploadFile(filePath)
-      const submit = await page.waitForSelector('#submit-button')
-      page.select('#image-format-select', 'original')
-      await submit?.click()
-      const download = await page.waitForSelector('#download-a', { visible: true, timeout: 3 * 60 * 1000 })
-      if (download) {
-        const blobUrl = await download.evaluate((el) => el.getAttribute('href'))
-        const bytes = await page.evaluate(async (url) => {
-          const res = await fetch(url || '')
-          const blob = await res.blob()
-          const arrayBuffer = await blob.arrayBuffer()
-          return Array.from(new Uint8Array(arrayBuffer))
-        }, blobUrl)
-        await page.close()
-        const buffer = Buffer.from(bytes)
-        return buffer.toString('base64')
-      }
-    }
-  }
-}
-
 export async function bratGenerator(browser: Browser, text: string) {
   if (browser) {
     const bratText = text.replace(/\n/g, ' ')

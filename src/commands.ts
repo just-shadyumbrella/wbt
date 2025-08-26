@@ -25,7 +25,8 @@ import {
 } from './util/wa.js'
 import { YTdlp } from './cli.js'
 import { mathVM } from './util/vm.js'
-import { bratGenerator, brotGenerator, enhancePhoto } from './util/pupscrap.js'
+import { bratGenerator, brotGenerator } from './util/pupscrap.js'
+import enhance from './util/enhance.js'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
@@ -403,17 +404,16 @@ const WBT = {
           }
         }
         if (mediaMsg) {
-          const browser = client.pupBrowser
-          if (browser) {
-            const media = await mediaMsg.downloadMedia()
-            const filePath = path.resolve(process.cwd(), tmpDir(), `${crypto.randomBytes(16).toString('hex')}.jpg`)
-            fs.writeFileSync(filePath, Buffer.from(media.data, 'base64'))
-            const enhanced = await enhancePhoto(browser, filePath)
-            if (typeof enhanced === 'string') {
-              return await message.reply(new WAWebJS.MessageMedia('image/jpeg', enhanced), undefined, {
-                sendMediaAsHd: true
-              })
-            }
+          const media = await mediaMsg.downloadMedia()
+          const result = await enhance(Buffer.from(media.data, 'base64'))
+          if (result.success) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.data.imageUrl)
+            return await message.reply(upload, undefined, {
+              sendMediaAsHd: true,
+            })
+          } else {
+            await message.reply(`❌ \`${result.code}\` ${result.name}: ${result.message}`)
+            throw result
           }
         } else {
           return await message.reply(useHelp([`[IMAGE] ↩️? ${command}`]))
