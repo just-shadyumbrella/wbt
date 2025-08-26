@@ -1,0 +1,20 @@
+name: Launcher
+on:
+  workflow_run:
+    workflows: ["Deploy"]
+    types:
+      - completed
+  schedule:
+    - cron: 0 */6 * * *
+
+concurrency:
+  group: launcher
+  cancel-in-progress: true
+
+jobs:
+  job:
+    name: My Job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Loading
+        run: sleep 1
