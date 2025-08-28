@@ -304,7 +304,7 @@ const WBT = {
         } else {
           return await message.reply(
             useHelp(
-              [`[IMAGE] ↩️? ${command} [${WPWFilters.join(' | ')}] [-c <0-9>] [-q <0-100>] [-u <2-4>] [-doc]`],
+              [`[IMAGE] ↩️? ${command} [${WPWFilters.join(' | ')}] [-doc]`],
               `*📝 Argumen*
 
 \`-doc\` Kirim sebagai dokumen
