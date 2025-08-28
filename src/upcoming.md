@@ -33,7 +33,7 @@
 - `/hytam` Penghitaman waifu/husbu 👽
 
 *🔰 Menu Lain-lain:*
-- `/remini` Penghalus gambar.
+- `/remini` Penghalus gambar. ✅ (dengan `/phototool`)
 - `/meme` Editor meme sederhana, bisa buat stiker atau shitpost.
 - `/sticker` Stiker yang bisa dikasih wm nama, author, dan kategori. ✅
 - `/yt-dlp` Alat download YouTube dan website lainnya. Bisa langsung diubah jadi media WhatsApp atau dokumen. 🚩

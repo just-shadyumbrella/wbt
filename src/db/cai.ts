@@ -1,6 +1,6 @@
 import { Lru, Fifo } from 'toad-cache'
 import sql from './index.js'
-import { chars, MessagesSlot } from '../ai/@openrouter.js'
+import { chars, MessagesSlot } from '../router/@openrouter.js'
 import { deepMerge, uniquePlaceholder } from '../util/data.js'
 import { logger, LoggerType } from '../util/logger.js'
 
