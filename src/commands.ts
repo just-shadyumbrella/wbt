@@ -5,32 +5,34 @@ import crypto from 'node:crypto'
 import ky from 'ky'
 import WAWebJS from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
+import { fileTypeFromBuffer } from 'file-type'
+import { IntRange } from 'type-fest'
 import { client } from '../index.js'
+import { YTdlp } from './cli.js'
+import { PHONE_NUMBER, PREFIX } from './env.js'
 import { logger, LoggerType } from './util/logger.js'
 import { pkg, sysinfo, tmpDir } from './util/si.js'
 import {
-  ParsedCommand,
-  PREFIX,
   useHelp,
   isOwner,
   isMyselfAdmin,
   checkIsMyselfAdmin,
   extractFlatId,
-  PHONE_NUMBER,
   getAuthorId,
   getGroupParticipants,
   getGroupAdmins,
   getGroupMembers,
   filterMyselfFromParticipants,
 } from './util/wa.js'
-import { YTdlp } from './cli.js'
 import { mathVM } from './util/vm.js'
-import { bratGenerator, brotGenerator } from './util/pupscrap.js'
-import enhance from './util/enhance.js'
+import { bratGenerator, brotGenerator } from './api/pupscrap.js'
+import { ParsedCommand } from './util/misc.js'
+import { photoTool, photoToolCommand } from './api/photo.js'
+import { WPW, WPWFilters } from './api/wpw.js'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
-  'Menu Utama': {
+  '📊 Menu Utama': {
     start: {
       description: 'Hello world.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
@@ -58,7 +60,7 @@ const WBT = {
       },
     },
   },
-  'Menu Grup (belum selesai)': {
+  '🎎 Menu Grup (belum selesai)': {
     promote: {
       description: 'Angkat member sebagai admin. 👑',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
@@ -181,12 +183,13 @@ const WBT = {
             undefined,
             { mentions }
           )
-          return await chat.removeParticipants(mentions)
+          await chat.removeParticipants(mentions)
+          return result
         }
       },
     },
   },
-  'Menu Game': {
+  '🕹️ Menu Game': {
     rc: {
       description: 'List redeem code aktif untuk beberapa game yang tersedia.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
@@ -220,7 +223,100 @@ const WBT = {
       },
     },
   },
-  'Menu Fun': {
+  '🔮 Menu AI': {
+    phototool: {
+      description: 'Manipulasi gambar berbasis AI.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        const tool = (parsed.positional[0] || '') as (typeof photoToolCommand)[number]
+        if (photoToolCommand.includes(tool) && mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const c = Number(flags['-c']) as IntRange<0, 9>
+          const q = Number(flags['-q']) as IntRange<0, 100>
+          const u = Number(flags['-u']) as IntRange<0, 4>
+          const result = await photoTool(message, Buffer.from(media.data, 'base64'), tool, {
+            compressLevel: !isNaN(c) ? c : undefined,
+            imageQuality: !isNaN(q) ? q : undefined,
+            upscalingLevel: !isNaN(q) ? u : undefined,
+          })
+          if (result) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
+            return await message.reply(upload, undefined, {
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [${photoToolCommand.join(' | ')}] [-c <0-9>] [-q <0-100>] [-u <2-4>] [-doc]`],
+              `*📝 Argumen*
+
+\`-c\` Level kompresi (Default: \`6\`)
+\`-q\` Level kualitas (Default: \`100\`)
+\`-u\` Level upscale (Default: \`0\`)
+\`-doc\` Kirim sebagai dokumen
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    wpw: {
+      description: 'Anuin waifu 🤭',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        const filter = (parsed.positional[0] || '') as (typeof WPWFilters)[number]
+        if (WPWFilters.includes(filter) && mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const result = await WPW(message, Buffer.from(media.data, 'base64'), filter)
+          if (result) {
+            const fileType = await fileTypeFromBuffer(result)
+            if (fileType) {
+              const upload = new WAWebJS.MessageMedia(fileType.mime, result.toString('base64'))
+              return await message.reply(upload, undefined, {
+                sendMediaAsDocument: doc,
+                sendMediaAsHd: !doc,
+              })
+            }
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [${WPWFilters.join(' | ')}] [-c <0-9>] [-q <0-100>] [-u <2-4>] [-doc]`],
+              `*📝 Argumen*
+
+\`-doc\` Kirim sebagai dokumen
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+  },
+  '🎭 Menu Fun': {
     percent: {
       description: 'Seberapa persen keberuntungan kamu.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
@@ -230,32 +326,125 @@ const WBT = {
       },
     },
   },
-  'Karakter AI (experimental!)': {
-    /*
-    new: {
-      description: 'Buat room baru.',
+  '🖼️ Menu Stiker': {
+    brat: {
+      description: 'Brat generator.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const command = params.shift()
-        !if (params.length) return await message.reply(useHelp([`${command} <nama karakter><room name>`]))
-        const charName = params.shift()
-        if (charName) {
-          const roomName = params.join(' ')
-          const result = await cai.new(roomName, message.id.remote, charName)
-          return await message.reply(`Room ${roomName} telah dibuat.`)
+        const { command, positional, body } = parsed
+        let realMsg = body
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+          const msgQ = await message.getQuotedMessage()
+          realMsg = msgQ.body
+        } else if (!positional.length) {
+          return await message.reply(useHelp([`${command} ↩️? <text>`]))
+        }
+        const browser = client.pupBrowser
+        const brat = await bratGenerator(browser, realMsg)
+        if (typeof brat === 'string') {
+          return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
+            sendMediaAsSticker: true,
+          })
         }
       },
     },
-    */
-    list: {
-      description: 'List karakter AI yang tersedia.',
+    brot: {
+      description: 'Brat generator versi saya. 😃',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        // params.shift()
-        // const Chars = Object.keys(chars).map((e) => `*@${e}*`)
-        // return await message.reply(`*🎭 List karakter AI yang tersedia:*\n\n${Chars.join('\n')}`)
+        const { command, positional, body } = parsed
+        let realMsg = body
+        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+          const msgQ = await message.getQuotedMessage()
+          realMsg = msgQ.body
+        } else if (!positional.length) {
+          return await message.reply(useHelp([`${command} ↩️? <text>`]))
+        }
+        const browser = client.pupBrowser
+        const brat = await brotGenerator(browser, realMsg)
+        if (typeof brat === 'string') {
+          return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
+            sendMediaAsSticker: true,
+          })
+        }
+      },
+    },
+    sticker: {
+      description: 'Pembuat stiker.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        if (mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const name = parsed.flags['-n']
+          const author = parsed.flags['-a']
+          const category = parsed.flags['-c']
+          return await message.reply(media, undefined, {
+            sendMediaAsSticker: true,
+            stickerName:
+              typeof name === 'string' ? name : parsed.flags['-N'] ? undefined : `${pkg.name} v${pkg.version}`,
+            stickerAuthor:
+              typeof author === 'string'
+                ? author
+                : parsed.flags['-A']
+                ? undefined
+                : 'github.com/just-shadyumbrella/wbt',
+            stickerCategories: typeof category === 'string' ? category.split(' ') : undefined,
+          })
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE|VIDEO] ↩️? ${command} [-n "<text>" | -N] [-a "<text>" | -A] [-c "<...emoji>"]`],
+              `*📝 Argumen*
+
+\`-n\` Nama (teks kiri), \`-N\` untuk menghapus
+\`-a\` Author (teks kanan), \`-A\` untuk menghapus
+\`-c\` Kategori (tag emoji stiker untuk memudahkan pencarian)
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    rsticker: {
+      description: 'Reverse sticker.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command } = parsed
+        let media: WAWebJS.MessageMedia | undefined
+        if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia && msgQ.type === WAWebJS.MessageTypes.STICKER) {
+            media = await msgQ.downloadMedia()
+          }
+        }
+        if (media) {
+          const doc = parsed.flags['-doc'] as boolean
+          media.filename = `sticker-${crypto.randomUUID()}.webp`
+          return await message.reply(media, undefined, {
+            sendMediaAsHd: !doc,
+            sendMediaAsDocument: doc,
+          })
+        } else {
+          return await message.reply(
+            useHelp([
+              `[STICKER] ↩️ ${command}`,
+              `*📝 Argumen*
+
+\`-doc\` Kirim sebagai dokumen)`,
+            ])
+          )
+        }
       },
     },
   },
-  'Menu Lain': {
+  '🧩 Menu Lain': {
     math: {
       description: 'Kalkulator sederhana mathjs.org',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
@@ -390,122 +579,6 @@ const WBT = {
       },
     },
     */
-    enhance: {
-      description: 'Peningkatkan kualitas foto.',
-      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const { command } = parsed
-        let mediaMsg: WAWebJS.Message | null = null
-        if (message.hasMedia) {
-          mediaMsg = message
-        } else if (message.hasQuotedMsg) {
-          const msgQ = await message.getQuotedMessage()
-          if (msgQ.hasMedia) {
-            mediaMsg = msgQ
-          }
-        }
-        if (mediaMsg) {
-          const media = await mediaMsg.downloadMedia()
-          const result = await enhance(Buffer.from(media.data, 'base64'))
-          if (result.success) {
-            const upload = await WAWebJS.MessageMedia.fromUrl(result.data.imageUrl)
-            return await message.reply(upload, undefined, {
-              sendMediaAsHd: true,
-            })
-          } else {
-            await message.reply(`❌ \`${result.code}\` ${result.name}: ${result.message}`)
-            throw result
-          }
-        } else {
-          return await message.reply(useHelp([`[IMAGE] ↩️? ${command}`]))
-        }
-      },
-    },
-    brat: {
-      description: 'Brat generator.',
-      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const { command, positional, body } = parsed
-        let realMsg = body
-        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
-          const msgQ = await message.getQuotedMessage()
-          realMsg = msgQ.body
-        } else if (!positional.length) {
-          return await message.reply(useHelp([`${command} ↩️? <text>`]))
-        }
-        const browser = client.pupBrowser
-        const brat = await bratGenerator(browser, realMsg)
-        if (typeof brat === 'string') {
-          return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
-            sendMediaAsSticker: true,
-          })
-        }
-      },
-    },
-    brot: {
-      description: 'Brat generator versi saya. 😃',
-      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const { command, positional, body } = parsed
-        let realMsg = body
-        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
-          const msgQ = await message.getQuotedMessage()
-          realMsg = msgQ.body
-        } else if (!positional.length) {
-          return await message.reply(useHelp([`${command} ↩️? <text>`]))
-        }
-        const browser = client.pupBrowser
-        const brat = await brotGenerator(browser, realMsg)
-        if (typeof brat === 'string') {
-          return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
-            sendMediaAsSticker: true,
-          })
-        }
-      },
-    },
-    sticker: {
-      description: 'Pembuat stiker.',
-      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const { command } = parsed
-        let mediaMsg: WAWebJS.Message | null = null
-        if (message.hasMedia) {
-          mediaMsg = message
-        } else if (message.hasQuotedMsg) {
-          const msgQ = await message.getQuotedMessage()
-          if (msgQ.hasMedia) {
-            mediaMsg = msgQ
-          }
-        }
-        if (mediaMsg) {
-          const media = await mediaMsg.downloadMedia()
-          const name = parsed.flags['-n']
-          const author = parsed.flags['-a']
-          const category = parsed.flags['-c']
-          return await message.reply(media, undefined, {
-            sendMediaAsSticker: true,
-            stickerName:
-              typeof name === 'string' ? name : parsed.flags['-N'] ? undefined : `${pkg.name} v${pkg.version}`,
-            stickerAuthor:
-              typeof author === 'string'
-                ? author
-                : parsed.flags['-A']
-                ? undefined
-                : 'github.com/just-shadyumbrella/wbt',
-            stickerCategories: typeof category === 'string' ? category.split(' ') : undefined,
-          })
-        } else {
-          return await message.reply(
-            useHelp(
-              [`[IMAGE|VIDEO] ↩️? ${command} [-n "<text>" | -N] [-a "<text>" | -A] [-c "<...emoji>"]`],
-              `*📝 Argumen*
-
-\`-n\` Nama (teks kiri), \`-N\` untuk menghapus
-\`-a\` Author (teks kanan), \`-A\` untuk menghapus
-\`-c\` Kategori (tag emoji stiker untuk memudahkan pencarian)
-
-\`Experimental\` Dapat dikirim via dokumen.`
-            )
-          )
-        }
-      },
-    },
     [PREFIX]: {
       description: '?',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
@@ -516,14 +589,14 @@ const WBT = {
 }
 
 let help = `*📝 Info penggunaan cukup kirim perintah tanpa argumen, atau \`${PREFIX}[perintah] help\`. Beberapa perintah dapat digunakan tanpa argumen.*\n\n> 👑 Hanya Admin\n`
-let commands: Record<string, (typeof WBT)['Menu Utama']['start']> = {}
+let commands: Record<string, (typeof WBT)['📊 Menu Utama']['start']> = {}
 for (const menu in WBT) {
   const menu_command_list: string[] = []
   for (const command in WBT[menu]) {
     commands[command] = WBT[menu][command]
     if (command !== PREFIX) menu_command_list.push(`- \`${PREFIX}${command}\` ${commands[command].description}`)
   }
-  help += `\n*🔰 ${menu}*\n${menu_command_list.join('\n')}\n`
+  help += `\n*${menu}*\n${menu_command_list.join('\n')}\n`
 }
 
 const devCommands = {

@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import crypto from 'node:crypto'
 
 export function uniquePlaceholder() {
@@ -109,4 +110,18 @@ function deepMergeAll<T extends DeepMergeable>(...items: T[]): T {
   }
 
   return items.reduce((acc, current) => deepMerge(acc, current))
+}
+
+export function resolvePathOrBuffer(input: string | Buffer): Buffer {
+  return Buffer.isBuffer(input) ? input : fs.readFileSync(input)
+}
+
+export class CustomError extends Error {
+  constructor(message?: string, options?: { name?: string }) {
+    super(message)
+    this.name = 'CustomError'
+    if (options?.name) {
+      this.name = options.name
+    }
+  }
 }

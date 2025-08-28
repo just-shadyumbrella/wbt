@@ -2,18 +2,11 @@ import fs from 'node:fs'
 import os from 'node:os'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
+import { PHONE_NUMBER, PREFIX, USER_AGENT } from './src/env.js'
 import commands, { builtInMentions } from './src/commands.js'
 import { logger, LoggerType } from './src/util/logger.js'
-import {
-  chromePath,
-  PREFIX,
-  parseArgumentsStructured,
-  PHONE_NUMBER,
-  extractMentions,
-  readMore,
-  getParticipantsId,
-  filterMyselfFromParticipants,
-} from './src/util/wa.js'
+import { extractMentions, readMore, getParticipantsId, filterMyselfFromParticipants } from './src/util/wa.js'
+import { chromePath, parseArgumentsStructured } from './src/util/misc.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -37,9 +30,7 @@ export const client = new WAWebJS.Client({
     phoneNumber: PHONE_NUMBER || '',
     showNotification: true,
   },
-  userAgent:
-    process.env.USER_AGENT ||
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+  userAgent: USER_AGENT,
   puppeteer: {
     headless: arg === 'debug' ? false : true,
     executablePath: chromePath(),
@@ -101,14 +92,26 @@ client.on('message_create', async (message) => {
       const { positional } = parsed
       const chat = await message.getChat()
       chat.sendStateTyping()
+      await client.syncHistory(chat.id._serialized)
+      let success = false
       if (Object.hasOwn(commands, command)) {
         context = `message_create=\$${command === PREFIX ? positional[0] : command}`
         await commands[command].handler(message, parsed)
+        success = true
       }
-      logger(LoggerType.LOG, { name, fn, context: context }, 'Request handled:', `${(Date.now() - now) / 1000}s`)
+      if (success)
+        logger(LoggerType.LOG, { name, fn, context: context }, 'Request handled:', `${(Date.now() - now) / 1000}s`)
     }
   } catch (e) {
-    logger(LoggerType.ERROR, { name, fn, context }, e, 'Message:', { message: message.body, parsed })
+    try {
+      const err = e as Error
+      await message.reply(`🤖 ${err.name}:\n\`\`\`${err.message}\`\`\``)
+    } catch (e2) {
+      logger(LoggerType.ERROR, { name, fn, context }, e2, 'Message:', {
+        message: message.hasMedia ? message.type : message.body,
+        parsed,
+      })
+    }
   }
   try {
     type Mention = keyof typeof builtInMentions
