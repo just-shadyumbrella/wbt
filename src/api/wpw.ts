@@ -6,23 +6,23 @@ import { USER_AGENT } from '../env.js'
 export const WPWFilters = ['hitam', 'coklat', 'nerd', 'piggy', 'carbon', 'botak'] as const
 
 type WPWRequest = {
-  filter: typeof WPWFilters[number]
+  filter: (typeof WPWFilters)[number]
   /**
    * Base64 encoded string (`/9j/...`)
-  */
- imageData: string
+   */
+  imageData: string
 }
 type WPWResponse = {
   /**
    * Base64 URL encoded string (`data:image/png;base64,...`)
-  */
- processedImageUrl: string
- status: 'success' | 'failed'
+   */
+  processedImageUrl: string
+  status: 'success' | 'failed'
 }
 
 const msgs = {
   process: {
-    ai: '```🤖 Ai image processing...```',
+    ai: '```🤖 AI image processing...```',
     done: '```🤖 Done!```',
   },
 }
@@ -59,7 +59,7 @@ export async function WPW(msg: Message, image: string | Buffer, filter: WPWReque
       return Buffer.from(base64, 'base64')
     } else {
       throw new CustomError('Server response status failed.', {
-        name: 'WPWError'
+        name: 'WPWError',
       })
     }
   } catch (e) {

@@ -17,7 +17,7 @@ const msgs = {
     done: '```🤖 Upload image done!```',
   },
   process: {
-    ai: '```🤖 Ai image processing...```',
+    ai: '```🤖 AI image processing...```',
     done: '```🤖 Done!```',
   },
 }
@@ -64,18 +64,18 @@ export async function uploadPhoto(image: Buffer, folder = 'uploads', msg: Messag
 export async function photoTool(
   msg: Message,
   image: string | Buffer | URL,
-  tool: typeof photoToolCommand[number],
+  tool: (typeof photoToolCommand)[number],
   options?: {
     imageQuality?: IntRange<0, 100>
     compressLevel?: IntRange<0, 9>
     upscalingLevel?: IntRange<0, 4>
-  },
+  }
 ) {
   const img = await (async () => {
     if (image instanceof URL) {
       const buffer = await ky.get(image.href).arrayBuffer()
-      const filetype = await fileTypeFromBuffer(buffer)
-      return { ...filetype, ...image, msg }
+      const fileType = await fileTypeFromBuffer(buffer)
+      return { ..._.merge(fileType, image), msg }
     } else {
       const buffer = resolvePathOrBuffer(image)
       return await uploadPhoto(buffer, undefined, msg)
@@ -95,8 +95,8 @@ export async function photoTool(
     })
 
     try {
-      const omsg = img.msg
-      const msg2 = omsg.fromMe? omsg : await msg.reply(msgs.process.ai)
+      const msg = img.msg
+      const msg2 = msg.fromMe ? await msg.edit(msgs.process.ai) : await msg.reply(msgs.process.ai)
       const response = await ky
         .post('https://pxpic.com/callAiFunction', {
           body: params.toString(),
@@ -109,7 +109,8 @@ export async function photoTool(
         })
         .json<{ resultImageUrl: string }>()
 
-      await msg2.edit('```🤖 Done!```')
+      if (msg2) await msg2.edit('```🤖 Done!```')
+
       return new URL(response.resultImageUrl)
     } catch (e) {
       throw e
