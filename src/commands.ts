@@ -262,10 +262,10 @@ const WBT = {
               [`[IMAGE] ↩️? ${command} [${photoToolCommand.join(' | ')}] [-c <0-9>] [-q <0-100>] [-u <2-4>] [-doc]`],
               `*📝 Argumen*
 
-\`-c\` Level kompresi (Default: \`6\`)
-\`-q\` Level kualitas (Default: \`100\`)
-\`-u\` Level upscale (Default: \`0\`)
-\`-doc\` Kirim sebagai dokumen
+\`-c\` Level kompresi (Default: \`6\`).
+\`-q\` Level kualitas (Default: \`100\`).
+\`-u\` Level upscale (Default: \`0\`).
+\`-doc\` Kirim sebagai dokumen.
 
 🧪 Dapat dikirim via dokumen.`
             )
@@ -307,7 +307,7 @@ const WBT = {
               [`[IMAGE] ↩️? ${command} [${WPWFilters.join(' | ')}] [-doc]`],
               `*📝 Argumen*
 
-\`-doc\` Kirim sebagai dokumen
+\`-doc\` Kirim sebagai dokumen.
 
 🧪 Dapat dikirim via dokumen.`
             )
@@ -403,9 +403,9 @@ const WBT = {
               [`[IMAGE|VIDEO] ↩️? ${command} [-n "<text>" | -N] [-a "<text>" | -A] [-c "<...emoji>"]`],
               `*📝 Argumen*
 
-\`-n\` Nama (teks kiri), \`-N\` untuk menghapus
-\`-a\` Author (teks kanan), \`-A\` untuk menghapus
-\`-c\` Kategori (tag emoji stiker untuk memudahkan pencarian)
+\`-n\` Nama (teks kiri), \`-N\` untuk menghapus.
+\`-a\` Author (teks kanan), \`-A\` untuk menghapus.
+\`-c\` Kategori (tag emoji stiker untuk memudahkan pencarian).
 
 🧪 Dapat dikirim via dokumen.`
             )
@@ -437,7 +437,7 @@ const WBT = {
               `[STICKER] ↩️ ${command}`,
               `*📝 Argumen*
 
-\`-doc\` Kirim sebagai dokumen)`,
+\`-doc\` Kirim sebagai dokumen.`,
             ])
           )
         }
