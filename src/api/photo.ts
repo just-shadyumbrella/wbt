@@ -42,6 +42,7 @@ export async function uploadPhoto(image: Buffer, folder = 'uploads', msg: Messag
           headers: { 'Content-Type': 'application/json' },
         })
         .json<{ presignedUrl: string }>()
+
       await msg2.edit(msgs.upload.upload)
 
       // Upload image
@@ -109,7 +110,7 @@ export async function photoTool(
         })
         .json<{ resultImageUrl: string }>()
 
-      if (msg2) await msg2.edit('```🤖 Done!```')
+      if (msg2) await msg2.edit(msgs.process.done)
 
       return new URL(response.resultImageUrl)
     } catch (e) {

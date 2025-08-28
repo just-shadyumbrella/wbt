@@ -55,7 +55,7 @@ export async function WPW(msg: Message, image: string | Buffer, filter: WPWReque
 
     if (response.status === 'success') {
       const base64 = response.processedImageUrl.replace(/^data:image\/\w+;base64,/, '')
-      await msg2.edit('```🤖 Done!```')
+      await msg2.edit(msgs.process.done)
       return Buffer.from(base64, 'base64')
     } else {
       throw new CustomError('Server response status failed.', {
