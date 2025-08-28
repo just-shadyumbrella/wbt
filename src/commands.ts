@@ -29,6 +29,7 @@ import { bratGenerator, brotGenerator } from './api/pupscrap.js'
 import { ParsedCommand } from './util/misc.js'
 import { photoTool, photoToolCommand } from './api/photo.js'
 import { WPW, WPWFilters } from './api/wpw.js'
+import _ from 'lodash'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
@@ -252,6 +253,7 @@ const WBT = {
           if (result) {
             const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
             return await message.reply(upload, undefined, {
+              caption: `🤖 *${_.upperFirst(tool)}* tool applied!`,
               sendMediaAsDocument: doc,
               sendMediaAsHd: !doc,
             })
@@ -296,6 +298,7 @@ const WBT = {
             if (fileType) {
               const upload = new WAWebJS.MessageMedia(fileType.mime, result.toString('base64'))
               return await message.reply(upload, undefined, {
+                caption: `🤖 *${_.upperFirst(filter)}* filter applied!`,
                 sendMediaAsDocument: doc,
                 sendMediaAsHd: !doc,
               })
