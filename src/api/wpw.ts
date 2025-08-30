@@ -22,12 +22,12 @@ type WPWResponse = {
 
 const msgs = {
   process: {
-    ai: '```🤖 AI image processing...```',
-    done: '```🤖 Done!```',
+    ai: '_🤖 AI image processing..._',
+    done: '*🤖 Done!*',
   },
 }
 
-const api = 'https://wpw.my.id/api/process-image' // POST json
+const api = 'https://wpw.my.id/api/process-image'
 
 export async function WPW(msg: Message, image: string | Buffer, filter: WPWRequest['filter']) {
   if (!WPWFilters.includes(filter)) {
@@ -45,10 +45,7 @@ export async function WPW(msg: Message, image: string | Buffer, filter: WPWReque
     const response = await ky
       .post(api, {
         json: request,
-        headers: {
-          'User-Agent': USER_AGENT,
-          'Accept-Language': 'id-ID',
-        },
+        headers: { 'User-Agent': USER_AGENT },
         timeout: 3 * 60 * 1000,
       })
       .json<WPWResponse>()

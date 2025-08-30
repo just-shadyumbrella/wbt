@@ -30,6 +30,8 @@ import { ParsedCommand } from './util/misc.js'
 import { photoTool, photoToolCommand } from './api/photo.js'
 import { WPW, WPWFilters } from './api/wpw.js'
 import _ from 'lodash'
+import { EZRemove } from './api/ezremove.js'
+import { PXC } from './api/pxc.js'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
@@ -267,6 +269,82 @@ const WBT = {
 \`-c\` Level kompresi (Default: \`6\`).
 \`-q\` Level kualitas (Default: \`100\`).
 \`-u\` Level upscale (Default: \`0\`).
+\`-doc\` Kirim sebagai dokumen.
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    ezremove: {
+      description: 'Remove BG alternatif.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        if (mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const result = await EZRemove(message, Buffer.from(media.data, 'base64'))
+          if (result) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
+            return await message.reply(upload, undefined, {
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [-doc]`],
+              `*📝 Argumen*
+
+\`-doc\` Kirim sebagai dokumen.
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    pxc: {
+      description: 'Upscale gambar alternatif.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        if (mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const result = await PXC(message, Buffer.from(media.data, 'base64'))
+          if (result) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
+            return await message.reply(upload, undefined, {
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [-doc]`],
+              `*📝 Argumen*
+
 \`-doc\` Kirim sebagai dokumen.
 
 🧪 Dapat dikirim via dokumen.`

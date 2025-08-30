@@ -12,13 +12,13 @@ export const photoToolCommand = ['enhance', 'upscale', 'removebg'] as const
 
 const msgs = {
   upload: {
-    prepare: '```🤖 Preparing upload...```',
-    upload: '```🤖 Uploading image...```',
-    done: '```🤖 Upload image done!```',
+    prepare: '_🤖 Preparing upload..._',
+    upload: '_🤖 Uploading image..._',
+    done: '*🤖 Upload image done!*',
   },
   process: {
-    ai: '```🤖 AI image processing...```',
-    done: '```🤖 Done!```',
+    ai: '_🤖 AI image processing..._',
+    done: '*🤖 Done!*',
   },
 }
 
@@ -67,9 +67,9 @@ export async function photoTool(
   image: string | Buffer | URL,
   tool: (typeof photoToolCommand)[number],
   options?: {
-    imageQuality?: IntRange<0, 100>
-    compressLevel?: IntRange<0, 9>
-    upscalingLevel?: IntRange<0, 4>
+    imageQuality?: IntRange<0, 101>
+    compressLevel?: IntRange<0, 10>
+    upscalingLevel?: IntRange<0, 5>
   }
 ) {
   const img = await (async () => {
@@ -104,7 +104,6 @@ export async function photoTool(
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'User-Agent': USER_AGENT,
-            'accept-language': 'id-ID',
           },
           timeout: 3 * 60 * 1000,
         })

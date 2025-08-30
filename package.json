@@ -22,7 +22,7 @@
     "chalk": "^5.6.0",
     "dotenv": "^17.2.1",
     "file-type": "^21.0.0",
-    "ky": "^1.9.0",
+    "ky": "^1.9.1",
     "lodash": "^4.17.21",
     "mathjs": "^14.6.0",
     "openai": "^5.16.0",
@@ -30,7 +30,7 @@
     "systeminformation": "^5.27.8",
     "toad-cache": "^3.7.0",
     "waddler": "^0.1.1",
-    "whatsapp-web.js": "1.32.0"
+    "whatsapp-web.js": "^1.33.1"
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.27",
@@ -40,7 +40,7 @@
     "abot-scraper": "^1.6.2",
     "ls-engines": "^0.9.3",
     "npm-check": "^6.0.1",
-    "puppeteer": "^24.17.0",
+    "puppeteer": "^24.17.1",
     "tsx": "^4.20.5",
     "type-fest": "^4.41.0",
     "typescript": "^5.9.2"
