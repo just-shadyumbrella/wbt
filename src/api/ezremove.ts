@@ -1,7 +1,7 @@
 import crypto from 'node:crypto'
 import ky from 'ky'
 import { Message } from 'whatsapp-web.js'
-import { CustomError, resolvePathOrBuffer } from '../util/data.js'
+import { CustomError, getProductSerial, resolvePathOrBuffer } from '../util/data.js'
 import { USER_AGENT } from '../env.js'
 
 type EZResponse = {
@@ -35,7 +35,7 @@ const msgs = {
   },
 }
 
-const productSerial = crypto.randomBytes(16).toString('hex')
+const productSerial = getProductSerial()
 const api = ky.create({
   prefixUrl: 'https://api.ezremove.ai/api/ez-remove/background-remove',
   timeout: 3 * 60 * 1000,
