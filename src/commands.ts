@@ -30,6 +30,9 @@ import { ParsedCommand } from './util/misc.js'
 import { photoTool, photoToolCommand } from './api/photo.js'
 import { WPW, WPWFilters } from './api/wpw.js'
 import _ from 'lodash'
+import { EZRemove } from './api/ezremove.js'
+import { PXC } from './api/pxc.js'
+import { REJobType, Remaker } from './api/remaker.js'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
@@ -195,8 +198,8 @@ const WBT = {
       description: 'List redeem code aktif untuk beberapa game yang tersedia.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
         const { command, positional } = parsed
-        const game = positional[0] || ''
-        const games = ['genshin', 'starrail', 'honkai', 'themis', 'zenless']
+        const games = ['genshin', 'hkrpg', 'nap'] as const
+        const game = (positional[0] || '') as (typeof games)[number]
         if (!games.includes(game))
           return await message.reply(
             useHelp(
@@ -204,22 +207,18 @@ const WBT = {
               `Pilihan game tersedia saat ini: ${games.map((e) => `\`${e}\``).join(', ')}.`
             )
           )
-        const json = await ky
-          .get<{
-            active: {
-              code: string
-              rewards: string[]
-            }[]
-            inactive: {
-              code: string
-              rewards: string[]
-            }[]
-          }>(`https://api.ennead.cc/mihoyo/${game}/codes`)
-          .json()
+        const json = await ky.get(`https://hoyo-codes.seria.moe/codes?game=${game}`).json<{
+          codes: {
+            id: number
+            code: string
+            status: 'OK' | 'NOT_OK'
+            game: (typeof games)[number]
+            rewards: string
+          }[]
+          game: (typeof games)[number]
+        }>()
         return await message.reply(
-          `*💡 Redeem code aktif \`${game}\`:*\n\n${json.active
-            .map((e) => `\`${e.code}\`\n${e.rewards.join(', ')}`)
-            .join('\n\n')}`
+          `*💡 Redeem code aktif \`${game}\`:*\n\n${json.codes.map((e) => `\`${e.code}\`\n${e.rewards}`).join('\n\n')}`
         )
       },
     },
@@ -267,6 +266,125 @@ const WBT = {
 \`-c\` Level kompresi (Default: \`6\`).
 \`-q\` Level kualitas (Default: \`100\`).
 \`-u\` Level upscale (Default: \`0\`).
+\`-doc\` Kirim sebagai dokumen.
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    remaker: {
+      description: `Alternatif \`${PREFIX}phototool\`.`,
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        const type = _.startCase(_.camelCase(parsed.positional[0] || '')).replace(
+          /\s+/g,
+          '_'
+        ) as (typeof REJobType)[number]
+        if (REJobType.includes(type) && mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const result = await Remaker(message, Buffer.from(media.data, 'base64'), type)
+          if (result) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
+            return await message.reply(upload, undefined, {
+              caption: `🤖 *${type}* applied!`,
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [${REJobType.map((e) => _.kebabCase(e)).join(' | ')}] [-doc]`],
+              `*📝 Argumen*
+
+\`-doc\` Kirim sebagai dokumen.
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    ezremove: {
+      description: 'Remove BG alternatif.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        if (mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const result = await EZRemove(message, Buffer.from(media.data, 'base64'))
+          if (result) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
+            return await message.reply(upload, undefined, {
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [-doc]`],
+              `*📝 Argumen*
+
+\`-doc\` Kirim sebagai dokumen.
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    pxc: {
+      description: 'Upscale gambar alternatif.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        if (mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const doc = flags['-doc'] as boolean
+          const result = await PXC(message, Buffer.from(media.data, 'base64'))
+          if (result) {
+            const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
+            return await message.reply(upload, undefined, {
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [`[IMAGE] ↩️? ${command} [-doc]`],
+              `*📝 Argumen*
+
 \`-doc\` Kirim sebagai dokumen.
 
 🧪 Dapat dikirim via dokumen.`
@@ -480,7 +598,7 @@ const WBT = {
           link = message.links[0].link
         }
         try {
-          const filePath = path.resolve(process.cwd(), tmpDir(), crypto.randomBytes(16).toString('hex'))
+          const filePath = path.resolve(process.cwd(), tmpDir(), crypto.randomUUID())
           await YTdlp(link, `-f [vcodec=h264]/b --merge-output-format mp4 --recode-video mp4 -o ${filePath}`.split(' '))
           const mediaUpload = WAWebJS.MessageMedia.fromFilePath(filePath)
           mediaUpload.mimetype = 'video/mp4'
