@@ -703,6 +703,7 @@ const WBT = {
     [PREFIX]: {
       description: '?',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        console.log('hi')
         if (await isOwner(message)) return await devCommands[parsed.positional[0]](message, parsed)
       },
     },
