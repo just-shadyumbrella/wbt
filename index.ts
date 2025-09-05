@@ -56,6 +56,12 @@ client.on('change_state', (state) =>
   logger(LoggerType.INFO, { name, fn, context: 'change_state' }, 'Client state:', state)
 )
 client.on('ready', async () => {
+  await client.setAutoDownloadAudio(false)
+  await client.setAutoDownloadDocuments(false)
+  await client.setAutoDownloadPhotos(false)
+  await client.setAutoDownloadVideos(false)
+  await client.setBackgroundSync(true)
+  console.log(client.info.wid)
   logger(LoggerType.INFO, { name, fn, context: 'ready' }, `Client ready.`)
   if (arg === 'pushauth') {
     logger(LoggerType.WARN, { name, fn, context: 'pushauth' }, 'Awaiting client sync to be done...')
@@ -90,8 +96,8 @@ client.on('message_create', async (message) => {
       const command = parsed.command.replace(new RegExp(`(${matcher.join('|')})(?=\\S)`), '')
       const { positional } = parsed
       const chat = await message.getChat()
-      chat.sendStateTyping()
-      await client.syncHistory(chat.id._serialized)
+      await chat.syncHistory()
+      await chat.sendStateTyping()
       let success = false
       if (Object.hasOwn(commands, command)) {
         context = `message_create=\$${command === PREFIX ? positional[0] : command}`

@@ -547,8 +547,11 @@ const WBT = {
         }
         if (media) {
           const doc = parsed.flags['-doc'] as boolean
-          media.filename = `sticker-${crypto.randomUUID()}.webp`
-          return await message.reply(media, undefined, {
+          const filename = `sticker-${crypto.randomUUID()}.webp`
+          const filePath = path.resolve(tmpDir(), filename)
+          fs.writeFileSync(filePath, Buffer.from(media.data, 'base64'))
+          const upload = doc ? WAWebJS.MessageMedia.fromFilePath(filePath) : media
+          return await message.reply(upload, undefined, {
             sendMediaAsHd: !doc,
             sendMediaAsDocument: doc,
           })
