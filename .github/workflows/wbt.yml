@@ -32,7 +32,7 @@ jobs:
         
       - uses: AnimMouse/setup-yt-dlp@v3
 
-      - uses: browser-actions/setup-chrome@v2
+      # - uses: browser-actions/setup-chrome@v2
 
       - uses: oven-sh/setup-bun@v2
         with:

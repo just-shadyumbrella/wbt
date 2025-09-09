@@ -61,11 +61,8 @@ export async function EZRemove(msg: Message, image: string | Buffer) {
       return new Promise<URL>((resolve, reject) => {
         const checkJob = setInterval(async () => {
           try {
-            const result = await api
-              //@ts-expect-error
-              .get(`get-job/${job.result.job_id}`, {
-              })
-              .json<EZResultOutput>()
+            //@ts-expect-error
+            const result = await api.get(`get-job/${job.result.job_id}`, {}).json<EZResultOutput>()
             if (result.code === 100000 && result.result) {
               clearInterval(checkJob)
               await msg2.edit(msgs.process.done)

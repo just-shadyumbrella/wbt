@@ -1,4 +1,3 @@
-import crypto from 'node:crypto'
 import ky from 'ky'
 import { Message } from 'whatsapp-web.js'
 import { CustomError, getProductSerial, resolvePathOrBuffer } from '../util/data.js'
@@ -64,7 +63,6 @@ const api = {
   }),
 }
 
-
 export async function getFreeTimes(type: keyof typeof api) {
   const response = await api[type].get('free_times').json<REFreeTimes>()
   if (response.code === 100000 && response.result) return response.result.free_times
@@ -85,10 +83,8 @@ async function RERemove(msg: Message, image: Buffer) {
       return new Promise<URL>((resolve, reject) => {
         const checkJob = setInterval(async () => {
           try {
-            const result = await api
-              //@ts-expect-error
-              .get(`get-job/${job.result.job_id}`)
-              .json<REResultOutput>()
+            //@ts-expect-error
+            const result = await api.get(`get-job/${job.result.job_id}`).json<REResultOutput>()
             if (result.code === 100000 && result.result) {
               clearInterval(checkJob)
               await msg2.edit(msgs.process.done)
@@ -138,10 +134,8 @@ export async function Remaker(msg: Message, image: string | Buffer, type: (typeo
       return new Promise<URL>((resolve, reject) => {
         const checkJob = setInterval(async () => {
           try {
-            const result = await api
-              //@ts-expect-error
-              .get(`get-job/${job.result.job_id}`)
-              .json<REResultOutput>()
+            //@ts-expect-error
+            const result = await api.enhance.get(`get-job/${job.result.job_id}`).json<REResultOutput>()
             if (result.code === 100000 && result.result) {
               clearInterval(checkJob)
               await msg2.edit(msgs.process.done)

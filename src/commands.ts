@@ -26,8 +26,8 @@ import {
 } from './util/wa.js'
 import { mathVM } from './util/vm.js'
 import { bratGenerator, brotGenerator } from './api/pupscrap.js'
-import { ParsedCommand } from './util/misc.js'
-import { photoTool, photoToolCommand } from './api/photo.js'
+import { ParsedCommand, sleep } from './util/misc.js'
+import { photoTool, photoToolCommand, uploadPhoto } from './api/photo.js'
 import { WPW, WPWFilters } from './api/wpw.js'
 import _ from 'lodash'
 import { EZRemove } from './api/ezremove.js'
@@ -547,8 +547,24 @@ const WBT = {
         }
         if (media) {
           const doc = parsed.flags['-doc'] as boolean
-          media.filename = `sticker-${crypto.randomUUID()}.webp`
-          return await message.reply(media, undefined, {
+          const link = parsed.flags['-link'] as boolean
+          const upload = link
+            ? await (async () => {
+              const url = await uploadPhoto(Buffer.from(media.data, 'base64'), undefined, message)
+              return `🤖 ${url.href}`
+              })()
+            : doc
+            ? WAWebJS.MessageMedia.fromFilePath(
+                await (async () => {
+                  const filename = `sticker-${crypto.randomUUID()}.webp`
+                  const filePath = path.resolve(tmpDir(), filename)
+                  fs.writeFileSync(filePath, Buffer.from(media.data, 'base64'))
+                  await sleep(10000)
+                  return filePath
+                })()
+              )
+            : media
+          return await message.reply(upload, undefined, {
             sendMediaAsHd: !doc,
             sendMediaAsDocument: doc,
           })
@@ -558,6 +574,7 @@ const WBT = {
               `[STICKER] ↩️ ${command}`,
               `*📝 Argumen*
 
+\`-link\` Kirim sebagai download link.
 \`-doc\` Kirim sebagai dokumen.`,
             ])
           )
@@ -703,6 +720,7 @@ const WBT = {
     [PREFIX]: {
       description: '?',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        console.log('hi')
         if (await isOwner(message)) return await devCommands[parsed.positional[0]](message, parsed)
       },
     },
