@@ -8,10 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
     "isolatedModules": true,
-    "lib": [
-      "esnext",
-      "DOM"
-    ],
+    "lib": ["ESNext", "DOM"],
     "module": "nodenext",
     "moduleDetection": "force",
     "noImplicitAny": false,

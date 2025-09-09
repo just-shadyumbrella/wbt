@@ -91,6 +91,10 @@ export function parseArgumentsStructured(input: string, prefix = [PREFIX]): Pars
   }
 }
 
+export async function sleep(ms: number) {
+  return await new Promise((r) => setTimeout(r, ms))
+}
+
 export function chromePath() {
   const fn = 'chromePath'
   try {

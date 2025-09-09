@@ -1,11 +1,13 @@
 import fs from 'node:fs'
+import puppeteer from 'puppeteer-extra'
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import { PHONE_NUMBER, PREFIX, USER_AGENT } from './src/env.js'
 import commands, { builtInMentions } from './src/commands.js'
 import { logger, LoggerType } from './src/util/logger.js'
 import { extractMentions, readMore, getParticipantsId, filterMyselfFromParticipants } from './src/util/wa.js'
-import { chromePath, parseArgumentsStructured } from './src/util/misc.js'
+import { parseArgumentsStructured } from './src/util/misc.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -21,6 +23,8 @@ if (arg === 'debug')
 if (arg === 'pushauth')
   logger(LoggerType.WARN, { name, fn: 'pushauth' }, 'Push browser profile to cloud, automatically exit on ready.')
 
+puppeteer.default.use(StealthPlugin())
+
 export const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
     dataPath: './tokens',
@@ -32,7 +36,7 @@ export const client = new WAWebJS.Client({
   userAgent: USER_AGENT,
   puppeteer: {
     headless: arg === 'debug' ? false : true,
-    executablePath: chromePath(),
+    executablePath: puppeteer.default.executablePath(),
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     timeout: 0, // If browser startup slower
   },
@@ -61,7 +65,6 @@ client.on('ready', async () => {
   await client.setAutoDownloadPhotos(false)
   await client.setAutoDownloadVideos(false)
   await client.setBackgroundSync(true)
-  console.log(client.info.wid)
   logger(LoggerType.INFO, { name, fn, context: 'ready' }, `Client ready.`)
   if (arg === 'pushauth') {
     logger(LoggerType.WARN, { name, fn, context: 'pushauth' }, 'Awaiting client sync to be done...')
@@ -111,6 +114,7 @@ client.on('message_create', async (message) => {
     try {
       const err = e as Error
       await message.reply(`🤖 ${err.name}:\n\`\`\`${err.message}\`\`\``)
+      console.error(e)
     } catch (e2) {
       logger(LoggerType.ERROR, { name, fn, context }, e2, 'Message:', {
         message: message.hasMedia ? message.type : message.body,
