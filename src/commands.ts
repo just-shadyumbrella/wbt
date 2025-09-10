@@ -82,8 +82,8 @@ const WBT = {
         const ff = `\`\`\`${logo}\`\`\`\n\n${fast
           .replace(/(\x1b.*|-{2,})\s+/g, '')
           .trimEnd()
-          .replace(/([a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+|((^\w+[ a-zA-z0-9()\\/-:]+|\b\w+\b)?:)|\d{2,}%)/gm, '*$1*')
-          .replace(/^(\*(\w+([ a-zA-z0-9()\\/-:]+))?:\*)/gm, '- $1')
+          .replace(/([a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+|((^\w+[ a-zA-z0-9()\\/\-:]+|\b\w+\b):)|\d{2,}%)/gm, '*$1*')
+          .replace(/^(\*(\w+[ a-zA-z0-9()\\/\-:]+:)\*)/gm, '- $1')
           .replace(/(\d+x\d+|\d+"|#\d+|(@ )?[\d.]+ [\w]?Hz)/g, '`$1`')
           .replace(/(\()(([A-Z]+:\\|\/)[0-9a-zA-Z_\-+\\/]*)(\))/g, '(`$2`)')}`
         return await message.reply(
