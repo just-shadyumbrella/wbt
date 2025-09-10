@@ -79,7 +79,7 @@ const WBT = {
           .replace(/\x1b.*/g, '')
           .trimEnd()
         const fast = (await fastfetch('-l none --pipe 1'.split(' '))).toString()
-        const ff = `\`\`\`${logo}\`\`\`\n\n${fast
+        const ff = `\`\`\`${logo}\`\`\`\n${fast
           .replace(/(\x1b.*|-{2,})\s+/g, '')
           .trimEnd()
           .replace(/([a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+|((^\w+[ a-zA-z0-9()\\/\-:]+|\b\w+\b):)|\d{2,}%)/gm, '*$1*')
