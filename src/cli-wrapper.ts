@@ -117,3 +117,28 @@ export async function YTdlp(link: string, args: string[]): Promise<Buffer> {
     })
   })
 }
+
+export async function fastfetch(args: string[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const binary = 'fastfetch'
+    const resultChunks: Buffer[] = []
+    const child = spawn(binary, args)
+    child.stdout.on('data', (chunk) => resultChunks.push(chunk))
+    child.stderr.on('data', (data) => {
+      const out = data.toString() as string
+      if (out.toLocaleLowerCase().includes('error')) {
+        console.error(out)
+      } else {
+        console.log(out)
+      }
+    })
+    child.on('error', reject)
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve(Buffer.concat(resultChunks))
+      } else {
+        reject(new Error(`YTdlp exited with code ${code}`))
+      }
+    })
+  })
+}

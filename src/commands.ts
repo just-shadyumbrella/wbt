@@ -8,10 +8,10 @@ import { create, all } from 'mathjs'
 import { fileTypeFromBuffer } from 'file-type'
 import { IntRange } from 'type-fest'
 import { client } from '../index.js'
-import { YTdlp } from './cli.js'
+import { fastfetch, YTdlp } from './cli-wrapper.js'
 import { PHONE_NUMBER, PREFIX } from './env.js'
 import { logger, LoggerType } from './util/logger.js'
-import { pkg, sysinfo, tmpDir } from './util/si.js'
+import { pkg, sysinfo, tmpDir, versions } from './util/si.js'
 import {
   useHelp,
   isOwner,
@@ -23,6 +23,7 @@ import {
   getGroupAdmins,
   getGroupMembers,
   filterMyselfFromParticipants,
+  readMore,
 } from './util/wa.js'
 import { mathVM } from './util/vm.js'
 import { bratGenerator, brotGenerator } from './api/pupscrap.js'
@@ -55,6 +56,39 @@ const WBT = {
       description: 'Cek status host.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
         return await message.reply(await sysinfo())
+      },
+    },
+    fastfetch: {
+      description: 'System information fetcher.',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const distros = [
+          'alpine3_small',
+          'arch_small',
+          'debian_small',
+          'fedora_small',
+          'gentoo_small',
+          'kali_small',
+          'manjaro_small',
+          'raspbian_small',
+          'rhel_small',
+          'ubuntu_small',
+        ]
+        const distro = parsed.positional[0] || distros[Math.floor(Math.random() * distros.length)]
+        const logo = (await fastfetch(`-l ${distro} --pipe 1`.split(' ')))
+          .toString()
+          .replace(/\x1b.*/g, '')
+          .trimEnd()
+        const fast = (await fastfetch('-l none --pipe 1'.split(' '))).toString()
+        const ff = `\`\`\`${logo}\`\`\`\n${fast
+          .replace(/(\x1b.*|-{2,})\s+/g, '')
+          .trimEnd()
+          .replace(/([a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+|((^\w+[ a-zA-z0-9()\\/\-:]+|\b\w+\b):)|\d{2,}%)/gm, '*$1*')
+          .replace(/^(\*(\w+[ a-zA-z0-9()\\/\-:]+:)\*)/gm, '- $1')
+          .replace(/(\d+x\d+|\d+"|#\d+|(@ )?[\d.]+ [\w]?Hz)/g, '`$1`')
+          .replace(/(\()(([A-Z]+:\\|\/)[0-9a-zA-Z_\-+\\/]*)(\))/g, '(`$2`)')}`
+        return await message.reply(
+          `${ff}\n\n*💼 Project*\n\`\`\`${JSON.stringify(pkg, null, 2)}\`\`\`\n\n> ${versions.join(' | ')}`
+        )
       },
     },
     upcoming: {
@@ -550,8 +584,8 @@ const WBT = {
           const link = parsed.flags['-link'] as boolean
           const upload = link
             ? await (async () => {
-              const url = await uploadPhoto(Buffer.from(media.data, 'base64'), undefined, message)
-              return `🤖 ${url.href}`
+                const url = await uploadPhoto(Buffer.from(media.data, 'base64'), undefined, message)
+                return `🔗 ${url.href}`
               })()
             : doc
             ? WAWebJS.MessageMedia.fromFilePath(
@@ -570,13 +604,13 @@ const WBT = {
           })
         } else {
           return await message.reply(
-            useHelp([
-              `[STICKER] ↩️ ${command}`,
+            useHelp(
+              [`[STICKER] ↩️ ${command}`],
               `*📝 Argumen*
 
 \`-link\` Kirim sebagai download link.
-\`-doc\` Kirim sebagai dokumen.`,
-            ])
+\`-doc\` Kirim sebagai dokumen.`
+            )
           )
         }
       },

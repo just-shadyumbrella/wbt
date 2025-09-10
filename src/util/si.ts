@@ -10,7 +10,7 @@ console.time('Package information stored')
 export const pkg = JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'package.json')).toString())
 const bun = process.versions.bun,
   node = process.versions.node
-const versions = [
+export const versions = [
   bun ? `Bun v${bun}` : undefined,
   node ? `NodeJS v${node}` : undefined,
   [pkg['name'], pkg['version']].join(' v'),
