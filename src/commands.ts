@@ -9,7 +9,7 @@ import { fileTypeFromBuffer } from 'file-type'
 import { IntRange } from 'type-fest'
 import { client } from '../index.js'
 import { fastfetch, YTdlp } from './cli-wrapper.js'
-import { PHONE_NUMBER, PREFIX } from './env.js'
+import { PREFIX } from './env.js'
 import { logger, LoggerType } from './util/logger.js'
 import { pkg, sysinfo, tmpDir, versions } from './util/si.js'
 import {
@@ -23,7 +23,6 @@ import {
   getGroupAdmins,
   getGroupMembers,
   filterMyselfFromParticipants,
-  readMore,
 } from './util/wa.js'
 import { mathVM } from './util/vm.js'
 import { bratGenerator, brotGenerator } from './api/pupscrap.js'
@@ -79,7 +78,7 @@ const WBT = {
           .replace(/\x1b.*/g, '')
           .trimEnd()
         const fast = (await fastfetch('-l none --pipe 1'.split(' '))).toString()
-        const ff = `\`\`\`${logo}\`\`\`\n${fast
+        const ff = `\`\`\`${logo}\`\`\`\n\n${fast
           .replace(/(\x1b.*|-{2,})\s+/g, '')
           .trimEnd()
           .replace(/([a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+|((^\w+[ a-zA-z0-9()\\/\-:]+|\b\w+\b):)|\d{2,}%)/gm, '*$1*')
@@ -128,13 +127,13 @@ const WBT = {
           if (failures.length) {
             await client.sendMessage(
               message.id.remote,
-              `🤖 ${failures.map((e) => `@${extractFlatId(e)}`).join(', ')} sudah jadi admin.`,
+              `🤖 ${failures.map((e) => `@${extractFlatId(e)}`).join(', ')} sudah jadi admin`,
               { mentions: failures }
             )
           }
           if (successes.length) {
             let author = await getAuthorId(message, true, true)
-            author = author === PHONE_NUMBER ? '*Saya*' : `@${author}`
+            author = author === client.info.wid.user ? '*Saya*' : `@${author}`
             const msg = parsed.flags['-m']
             return await message.reply(
               `🤖 ${successes.map((e) => `@${extractFlatId(e)}`).join(', ')} diangkat jadi admin oleh ${author} 👑${
@@ -163,6 +162,12 @@ const WBT = {
           }
           const chat = (await message.getChat()) as WAWebJS.GroupChat
           mentions = (await filterMyselfFromParticipants(mentions)).participants
+          const owner = (
+            await client.getContactLidAndPhone([
+              (await getGroupParticipants(message)).filter((e) => e.isSuperAdmin)[0].id._serialized,
+            ])
+          )[0]
+          let isOwnerMentioned = false
           let successes: string[] = []
           let failures: string[] = []
           for (const mention of mentions) {
@@ -170,19 +175,26 @@ const WBT = {
               await chat.demoteParticipants([mention])
               successes.push(mention)
             } catch {
-              failures.push(mention)
+              if (mention === owner.lid || mention === owner.pn) {
+                isOwnerMentioned = true
+              } else {
+                failures.push(mention)
+              }
             }
           }
-          if (failures.length) {
+          if (isOwnerMentioned)
+            await client.sendMessage(message.id.remote, `🤖 @${extractFlatId(owner.lid)} adalah pemilik grup`, {
+              mentions: [owner.lid],
+            })
+          if (failures.length)
             await client.sendMessage(
               message.id.remote,
-              `🤖 ${failures.map((e) => `@${extractFlatId(e)}`).join(', ')} bukan admin.`,
+              `🤖 ${failures.map((e) => `@${extractFlatId(e)}`).join(', ')} bukan admin`,
               { mentions: failures }
             )
-          }
           if (successes.length) {
             let author = await getAuthorId(message, true, true)
-            author = author === PHONE_NUMBER ? '*Saya*' : `@${author}`
+            author = author === client.info.wid.user ? '*Saya*' : `@${author}`
             const msg = parsed.flags['-m']
             return await message.reply(
               `🤖 ${author} menurunkan jabatan ${mentions.map((e) => `@${extractFlatId(e)}`).join(', ')} 👑${
@@ -212,7 +224,7 @@ const WBT = {
           const chat = (await message.getChat()) as WAWebJS.GroupChat
           mentions = (await filterMyselfFromParticipants(mentions)).participants
           let author = await getAuthorId(message, true, true)
-          author = author === PHONE_NUMBER ? '*Saya*' : `@${author}`
+          author = author === client.info.wid.user ? '*Saya*' : `@${author}`
           const msg = parsed.flags['-m']
           const result = await message.reply(
             `🤖 ${author} mengeluarkan ${mentions.map((e) => `@${extractFlatId(e)}`).join(', ')} 👑${
@@ -754,8 +766,21 @@ const WBT = {
     [PREFIX]: {
       description: '?',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        console.log('hi')
-        if (await isOwner(message)) return await devCommands[parsed.positional[0]](message, parsed)
+        if (await isOwner(message)) {
+          const devCommand = parsed.positional[0]
+          try {
+            return await devCommands[devCommand](message, parsed)
+          } catch (e) {
+            if (
+              e instanceof TypeError &&
+              e.message.includes('devCommands') &&
+              e.message.includes('is not a function')
+            ) {
+              e.message = `\`${devCommand}\` tidak ada`
+              throw e
+            }
+          }
+        }
       },
     },
   },
@@ -782,7 +807,33 @@ const devCommands = {
     await client.destroy()
     process.exit(0)
   },
-  isadmin: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+  mentions: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+    const mentionsCT = await message.getMentions()
+    return await message.reply(
+      `*Raw:*\n\n${message.mentionedIds.join('\n')}\n\n*Formatted:*\n\n${mentionsCT.map((e) => e.id.user).join('\n')}`
+    )
+  },
+  admins: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+    const mins = await getGroupAdmins(message)
+    const admins = mins.filter((e) => e.isAdmin)
+    const owner = mins.filter((e) => e.isSuperAdmin)
+    return await message.reply(
+      `*👑 Owner*\n\n${owner[0].id.user}\n\n*👑 Admin*\n\n${admins.map((e) => e.id.user).join('\n')}`
+    )
+  },
+  body: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+    if (message.hasQuotedMsg) {
+      const msgQ = await message.getQuotedMessage()
+      return await message.reply(`🤖 Message: \`\`\`${msgQ.body}\`\`\``)
+    }
+  },
+  msg: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+    if (message.hasQuotedMsg) {
+      const msgQ = await message.getQuotedMessage()
+      return await message.reply(`🤖 Message: \`\`\`${JSON.stringify(msgQ, null, 2)}\`\`\``)
+    }
+  },
+  meadmin: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
     return await message.reply(`🤖 Saya ${(await isMyselfAdmin(message)) ? 'adalah' : 'bukan'} admin 👑`)
   },
 }
