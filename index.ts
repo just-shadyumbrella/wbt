@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 import { PHONE_NUMBER, PREFIX, USER_AGENT } from './src/env.js'
@@ -24,6 +25,11 @@ if (arg === 'pushauth')
   logger(LoggerType.WARN, { name, fn: 'pushauth' }, 'Push browser profile to cloud, automatically exit on ready.')
 
 puppeteer.default.use(StealthPlugin())
+puppeteer.default.use(
+  AdblockerPlugin.default({
+    blockTrackers: true,
+  })
+)
 
 export const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
@@ -50,7 +56,7 @@ client.on('disconnected', (message) => {
   logger(LoggerType.WARN, { name, fn, context: 'disconnected' }, `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
     logger(LoggerType.INFO, { name, fn, context: 'initialize' }, 'Reinitializing client...')
-    main()
+    // main()
   }
 })
 client.on('loading_screen', (message) =>
@@ -99,7 +105,7 @@ client.on('message_create', async (message) => {
       const command = parsed.command.replace(new RegExp(`(${matcher.join('|')})(?=\\S)`), '')
       const { positional } = parsed
       const chat = await message.getChat()
-      await chat.syncHistory()
+      if (chat.isGroup) await chat.syncHistory()
       await chat.sendStateTyping()
       let success = false
       if (Object.hasOwn(commands, command)) {
@@ -178,7 +184,7 @@ async function main() {
       logger(LoggerType.ERROR, { name, fn, context: 'initialize' }, e)
       logger(LoggerType.WARN, { name, fn, context: 'initialize' }, 'Retrying client initialization in 5 seconds...')
       await new Promise((resolve) => setTimeout(resolve, 5000))
-      console.clear()
+      // console.clear()
       await client.destroy()
     }
   }

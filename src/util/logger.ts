@@ -58,5 +58,7 @@ function playBeep(type: 'foreground' | 'background') {
     execSync('rundll32 user32.dll,MessageBeep')
     return
   }
-  process.stdout.write('\x07') // Under VSCode won't work
+  if (process.stdout.isTTY) {
+    process.stdout.write('\x07') // Under VSCode won't work
+  }
 }

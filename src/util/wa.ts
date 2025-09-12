@@ -1,6 +1,6 @@
 import WAWebJS from 'whatsapp-web.js'
 import { client } from '../../index.js'
-import { OWNER_NUMBER, PHONE_NUMBER } from '../env.js'
+import { OWNER_NUMBER } from '../env.js'
 
 export const readMore = ` ${'\u{34f}'.repeat(1024 * 3)}`
 
@@ -69,7 +69,7 @@ export async function isAdmin(message: WAWebJS.Message, user?: string) {
 }
 
 export async function isMyselfAdmin(message: WAWebJS.Message) {
-  return await isAdmin(message, `${process.env.PHONE_NUMBER}@c.us`)
+  return await isAdmin(message, client.info.wid._serialized)
 }
 
 export async function checkIsMyselfAdmin(message: WAWebJS.Message) {
@@ -79,18 +79,18 @@ export async function checkIsMyselfAdmin(message: WAWebJS.Message) {
 }
 
 export async function filterMyselfFromParticipants(participants: string[], replaceWith?: string) {
-  const me = (await client.getContactLidAndPhone([`${PHONE_NUMBER}@c.us`]))[0]
+  const me = (await client.getContactLidAndPhone([client.info.wid._serialized]))[0]
   let myselfThere = false
   const filtered = replaceWith
     ? participants.map((e) => {
-        if (e === me.pn || e === me.lid || e === PHONE_NUMBER) {
+        if (e === me.pn || e === me.lid || e === client.info.wid.user) {
           myselfThere = true
           return replaceWith
         }
         return e
       })
     : participants.filter((e) => {
-        if (e === me.pn || e === me.lid || e === PHONE_NUMBER) {
+        if (e === me.pn || e === me.lid || e === client.info.wid.user) {
           myselfThere = true
           return false
         }
