@@ -23,6 +23,8 @@ import {
   getGroupAdmins,
   getGroupMembers,
   filterMyselfFromParticipants,
+  MessageCollector,
+  chatSync,
 } from './util/wa.js'
 import { mathVM } from './util/vm.js'
 import { bratGenerator, brotGenerator } from './api/pupscrap.js'
@@ -235,6 +237,64 @@ const WBT = {
           )
           await chat.removeParticipants(mentions)
           return result
+        }
+      },
+    },
+    delete: {
+      description: 'Hapus pesan. 👑🚧',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, positional } = parsed
+        if (await checkIsMyselfAdmin(message)) {
+          if (message.hasQuotedMsg) {
+            const cmd = positional[0]
+            const msgQ = await message.getQuotedMessage()
+            switch (cmd) {
+              case 'start':
+                const reply = await message.reply('_🤖 Start recording messages..._')
+                return await MessageCollector.set(message.id.remote, {
+                  reply,
+                  start: await message.getQuotedMessage(),
+                })
+              case 'end':
+                const msg = MessageCollector.get(message.id.remote)
+                MessageCollector.delete(message.id.remote)
+                if (msg) {
+                  if (message.hasQuotedMsg) {
+                    await msg.reply.edit('_*🤖 Start deletion...*_')
+                    const chat = await chatSync(message)
+                    const messages = await chat.fetchMessages({ limit: Number.MAX_VALUE })
+                    const start = messages.findIndex((e) => e.id.id === msg.start.id.id)
+                    if (start === -1) return await msg.reply.edit('🤖 Start message *not found!*')
+                    const end = messages.findIndex((e) => e.id.id === msgQ.id.id)
+                    if (end === -1) return await msg.start.edit('🤖 End message *not found!*')
+                    const deleteList = messages.slice(start, end + 1)
+                    for (const del of deleteList) {
+                      try {
+                        await del.delete(true, true)
+                      } catch {}
+                      await sleep(750)
+                    }
+                    try {
+                      await msg.reply.delete(true, true)
+                    } catch {}
+                    return await message.delete(true, true)
+                    // await message.reply('*🤖 OK!*')
+                    // await sleep(750)
+                  } else {
+                    return await msg.reply.edit('🤖 *Quote* the message!')
+                  }
+                } else {
+                  return await message.reply('🤖 Recording messages *not started!*')
+                }
+              default:
+                await msgQ.delete(true, true)
+                // await message.reply('*🤖 OK!*')
+                // await sleep(750)
+                return await message.delete(true, true)
+            }
+          } else {
+            return await message.reply(useHelp([`${command} [start | end]`], `🚧 WIP`))
+          }
         }
       },
     },
@@ -497,40 +557,44 @@ const WBT = {
     brat: {
       description: 'Brat generator.',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const { command, positional, body } = parsed
+        const { command, body } = parsed
         let realMsg = body
-        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+        if (message.hasQuotedMsg) {
           const msgQ = await message.getQuotedMessage()
-          realMsg = msgQ.body
-        } else if (!positional.length) {
-          return await message.reply(useHelp([`${command} ↩️? <text>`]))
+          realMsg = msgQ.body || realMsg
         }
-        const browser = client.pupBrowser
-        const brat = await bratGenerator(browser, realMsg)
-        if (typeof brat === 'string') {
-          return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
-            sendMediaAsSticker: true,
-          })
+        if (realMsg) {
+          const browser = client.pupBrowser
+          const brat = await bratGenerator(browser, realMsg)
+          if (typeof brat === 'string') {
+            return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
+              sendMediaAsSticker: true,
+            })
+          }
+        } else {
+          return await message.reply(useHelp([`${command} ↩️? <text>`]))
         }
       },
     },
     brot: {
       description: 'Brat generator versi saya. 😃',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
-        const { command, positional, body } = parsed
+        const { command, body } = parsed
         let realMsg = body
-        if (message.hasQuotedMsg && message.type === WAWebJS.MessageTypes.TEXT) {
+        if (message.hasQuotedMsg) {
           const msgQ = await message.getQuotedMessage()
-          realMsg = msgQ.body
-        } else if (!positional.length) {
-          return await message.reply(useHelp([`${command} ↩️? <text>`]))
+          realMsg = msgQ.body || realMsg
         }
-        const browser = client.pupBrowser
-        const brat = await brotGenerator(browser, realMsg)
-        if (typeof brat === 'string') {
-          return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
-            sendMediaAsSticker: true,
-          })
+        if (realMsg) {
+          const browser = client.pupBrowser
+          const brat = await brotGenerator(browser, realMsg)
+          if (typeof brat === 'string') {
+            return await message.reply(new WAWebJS.MessageMedia('image/png', brat), undefined, {
+              sendMediaAsSticker: true,
+            })
+          }
+        } else {
+          return await message.reply(useHelp([`${command} ↩️? <text>`]))
         }
       },
     },
@@ -643,7 +707,12 @@ const WBT = {
       description: 'VM mathjs.org',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
         const { command, body } = parsed
-        if (body) return await message.reply(`🖥️ ${util.inspect(mathVM(body), { depth: null })}`)
+        if (body) {
+          const result = mathVM(body)
+          return await message.reply(
+            `🖥️ ${typeof result === 'string' ? result : util.inspect(result, { depth: null })}`
+          )
+        }
         return await message.reply(useHelp([`${command} <code>`], `Semua fitur selengkapnya di mathjs.org`))
       },
     },
@@ -776,7 +845,7 @@ const WBT = {
               e.message.includes('devCommands') &&
               e.message.includes('is not a function')
             ) {
-              e.message = `\`${devCommand}\` tidak ada`
+              e.message = `\`${devCommand}\` tidak ada.`
               throw e
             }
           }
@@ -835,6 +904,9 @@ const devCommands = {
   },
   meadmin: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
     return await message.reply(`🤖 Saya ${(await isMyselfAdmin(message)) ? 'adalah' : 'bukan'} admin 👑`)
+  },
+  del: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+    return await message.delete(true, true)
   },
 }
 

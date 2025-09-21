@@ -92,9 +92,13 @@ export function parseArgumentsStructured(input: string, prefix = [PREFIX]): Pars
 }
 
 export async function sleep(ms: number) {
-  return await new Promise((r) => setTimeout(r, ms))
+  return await new Promise<void>((r) => setTimeout(r, ms))
 }
 
+/**
+ * @deprecated
+ * @returns Guessed Google Chrome installation path.
+ */
 export function chromePath() {
   const fn = 'chromePath'
   try {

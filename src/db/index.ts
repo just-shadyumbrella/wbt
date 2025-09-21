@@ -1,9 +1,9 @@
 import { waddler } from 'waddler/duckdb-neo'
-import { config } from 'dotenv'
+import { DUCKDB } from '../env.js'
 import { logger, LoggerType } from '../util/logger.js'
 
 const name = 'db/index'
-config()
+const dbName = 'wbt'
 
 async function createSqlConnection(dbLocalPath: string, dbUrl?: string) {
   const fn = 'createSqlConnection'
@@ -56,6 +56,6 @@ async function createSqlConnection(dbLocalPath: string, dbUrl?: string) {
   }
 }
 
-const sql = await createSqlConnection('wbt.db', process.env.DUCKDB)
+export type OperationRowData = { Count: BigInt }
 
-export default sql
+export default await createSqlConnection(`${dbName}.db`, DUCKDB)
