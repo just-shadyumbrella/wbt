@@ -36,9 +36,9 @@
 
   > ⚠️ Deno is not supported (due to different environment that this project is built for).
 
-  This project uses [WWeb.js](https://github.com/pedroslopez/whatsapp-web.js), which relies on [Puppeteer](https://pptr.dev) under the hood. Some media-related features (e.g., videos and GIFs) require you to provide the path to your **Google Chrome binary** in your shell environment or in [`.env`](./.env). See [this note](https://wwebjs.dev/guide/creating-your-bot/handling-attachments#caveat-for-sending-videos-and-gifs) for details.
+  This project uses [WWeb.js](https://github.com/pedroslopez/whatsapp-web.js), which relies on [Puppeteer](https://pptr.dev) under the hood. ~~Some media-related features (e.g., videos and GIFs) require you to provide the path to your **Google Chrome binary** in your shell environment or in [`.env`](./.env). See [this note](https://wwebjs.dev/guide/creating-your-bot/handling-attachments#caveat-for-sending-videos-and-gifs) for details.~~ All helps done by [`puppeteer-extra`](https://github.com/berstend/puppeteer-extra) for now.
 
-> *Other details coming soon as this project isn't yet ready for future use.*
+> *Other details is coming soon as this project isn't yet ready for future use.*
 
 </details>
 <details>
@@ -92,7 +92,7 @@ You can adjust or remove this behavior in [`index.ts`](./index.ts).
 ### 👤 Usage</summary>
 
 Send `/help` to the client number for a list of available commands.
-It works both from the bot itself and by other sender.
+It works both from the bot itself and by foreign sender.
 
 </details>
 

@@ -84,7 +84,7 @@ async function RERemove(msg: Message, image: Buffer) {
         const checkJob = setInterval(async () => {
           try {
             //@ts-expect-error
-            const result = await api.get(`get-job/${job.result.job_id}`).json<REResultOutput>()
+            const result = await api.removebg.get(`get-job/${job.result.job_id}`).json<REResultOutput>()
             if (result.code === 100000 && result.result) {
               clearInterval(checkJob)
               await msg2.edit(msgs.process.done)

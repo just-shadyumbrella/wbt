@@ -52,11 +52,15 @@ client.on('auth_failure', (message) => logger(LoggerType.ERROR, { name, fn, cont
 client.on('authenticated', () =>
   logger(LoggerType.INFO, { name, fn, context: 'authenticated' }, `Client authenticated.`)
 )
-client.on('disconnected', (message) => {
+client.on('disconnected', async (message) => {
   logger(LoggerType.WARN, { name, fn, context: 'disconnected' }, `Client ${message.toLocaleLowerCase()}.`)
   if (message === 'LOGOUT') {
-    logger(LoggerType.INFO, { name, fn, context: 'initialize' }, 'Reinitializing client...')
-    // main()
+    try {
+      await client.destroy()
+    } catch (e) {
+      console.log(e)
+    }
+    main()
   }
 })
 client.on('loading_screen', (message) =>
@@ -105,7 +109,6 @@ client.on('message_create', async (message) => {
       const command = parsed.command.replace(new RegExp(`(${matcher.join('|')})(?=\\S)`), '')
       const { positional } = parsed
       const chat = await message.getChat()
-      if (chat.isGroup) await chat.syncHistory()
       await chat.sendStateTyping()
       let success = false
       if (Object.hasOwn(commands, command)) {
@@ -119,7 +122,7 @@ client.on('message_create', async (message) => {
   } catch (e) {
     try {
       const err = e as Error
-      await message.reply(`🤖 ${err.name}:\n\`\`\`${err.message}\`\`\``)
+      await message.reply(`🤖 ${err.name}: \`\`\`${err.message}\`\`\``)
       console.error(e)
     } catch (e2) {
       logger(LoggerType.ERROR, { name, fn, context }, e2, 'Message:', {
@@ -174,13 +177,13 @@ async function main() {
     try {
       await client.initialize()
       logger(LoggerType.INFO, { name, fn, context: 'version' }, await client.getWWebVersion())
+      initialized = true
       client.pupBrowser?.on('disconnected', () => {
         logger(LoggerType.WARN, { name, fn, context: 'disconnected' }, 'Browser disconnected.')
         process.exit(0)
       })
       break
     } catch (e) {
-      initialized = true
       logger(LoggerType.ERROR, { name, fn, context: 'initialize' }, e)
       logger(LoggerType.WARN, { name, fn, context: 'initialize' }, 'Retrying client initialization in 5 seconds...')
       await new Promise((resolve) => setTimeout(resolve, 5000))

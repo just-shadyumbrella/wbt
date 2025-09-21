@@ -1,6 +1,7 @@
 import WAWebJS from 'whatsapp-web.js'
 import { client } from '../../index.js'
 import { OWNER_NUMBER } from '../env.js'
+import { sleep } from './misc.js'
 
 export const readMore = ` ${'\u{34f}'.repeat(1024 * 3)}`
 
@@ -29,7 +30,7 @@ export async function getAuthorId(message: WAWebJS.Message, toCUS = true, flat =
  * No lid
  */
 export async function getGroupParticipants(message: WAWebJS.Message) {
-  const chat = (await message.getChat()) as GroupChat
+  const chat = (await chatSync(message)) as GroupChat
   return chat.isGroup ? chat.participants : []
 }
 
@@ -113,4 +114,37 @@ export async function getChat(message: WAWebJS.Message, noClient = false) {
     return { ...chatWithoutClient, lastMessage: lastMessageWithoutClient }
   }
   return chat
+}
+
+export async function chatSync(message: WAWebJS.Message) {
+  const chat = await message.getChat()
+  const result = await chat.syncHistory()
+  return chat
+}
+
+export const MessageCollector = new Map<
+  string,
+  {
+    reply: WAWebJS.Message
+    start: WAWebJS.Message
+  }
+>()
+
+export async function simpleMessageObject(message: WAWebJS.Message) {
+  const supportedMsgType = [
+    WAWebJS.MessageTypes.TEXT,
+    WAWebJS.MessageTypes.IMAGE,
+    WAWebJS.MessageTypes.VIDEO,
+    WAWebJS.MessageTypes.AUDIO,
+    WAWebJS.MessageTypes.VOICE,
+    WAWebJS.MessageTypes.DOCUMENT,
+    WAWebJS.MessageTypes.STICKER,
+  ] as const
+  if (supportedMsgType.includes(message.type as (typeof supportedMsgType)[number])) {
+    return {
+      type: message.type as (typeof supportedMsgType)[number],
+      body: message.body,
+      media: message.hasMedia ? await message.downloadMedia() : undefined,
+    }
+  }
 }
