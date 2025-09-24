@@ -114,7 +114,7 @@ const WBT = {
           } else {
             mentions = message.mentionedIds
           }
-          const chat = (await message.getChat()) as WAWebJS.GroupChat
+          const chat = (await chatSync(message)) as WAWebJS.GroupChat
           mentions = (await filterMyselfFromParticipants(mentions)).participants
           let successes: string[] = []
           let failures: string[] = []
@@ -162,7 +162,7 @@ const WBT = {
           } else {
             mentions = message.mentionedIds
           }
-          const chat = (await message.getChat()) as WAWebJS.GroupChat
+          const chat = (await chatSync(message)) as WAWebJS.GroupChat
           mentions = (await filterMyselfFromParticipants(mentions)).participants
           const owner = (
             await client.getContactLidAndPhone([
@@ -223,7 +223,7 @@ const WBT = {
           } else {
             mentions = message.mentionedIds
           }
-          const chat = (await message.getChat()) as WAWebJS.GroupChat
+          const chat = (await chatSync(message)) as WAWebJS.GroupChat
           mentions = (await filterMyselfFromParticipants(mentions)).participants
           let author = await getAuthorId(message, true, true)
           author = author === client.info.wid.user ? '*Saya*' : `@${author}`
@@ -272,14 +272,12 @@ const WBT = {
                       try {
                         await del.delete(true, true)
                       } catch {}
-                      await sleep(750)
+                      await sleep(860)
                     }
                     try {
                       await msg.reply.delete(true, true)
                     } catch {}
                     return await message.delete(true, true)
-                    // await message.reply('*🤖 OK!*')
-                    // await sleep(750)
                   } else {
                     return await msg.reply.edit('🤖 *Quote* the message!')
                   }
@@ -288,8 +286,7 @@ const WBT = {
                 }
               default:
                 await msgQ.delete(true, true)
-                // await message.reply('*🤖 OK!*')
-                // await sleep(750)
+                await sleep(860)
                 return await message.delete(true, true)
             }
           } else {
@@ -832,6 +829,27 @@ const WBT = {
       },
     },
     */
+    gnoloc: {
+      description: '?',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { positional, flags } = parsed
+        const flatNumber = Number(positional[0])
+        if (!isNaN(flatNumber)) {
+          const contact = await client.getContactById(`${flatNumber}@c.us`)
+          if (flags['-link']) {
+            return await message.reply(`🔗 ${await contact.getProfilePicUrl()}`)
+          } else {
+            return await message.reply(
+              await WAWebJS.MessageMedia.fromUrl(await contact.getProfilePicUrl()),
+              undefined,
+              {
+                sendMediaAsHd: true,
+              }
+            )
+          }
+        }
+      },
+    },
     [PREFIX]: {
       description: '?',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
