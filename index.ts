@@ -201,7 +201,7 @@ async function main() {
 // }, 5 * 60 * 60 * 1000 + 55 * 60 * 1000) // Maximum 5:55
 
 setInterval(async () => {
-  const limitSeconds = 60 * 60 * 5 + 60 * 50 // 5:55
+  const limitSeconds = 60 * 60 * 5 + 60 * 55 // 5:55
   if (os.uptime() >= limitSeconds) {
     logger(LoggerType.WARN, { name, fn: 'setTimeout', context: 'destroy' }, 'Shutting down due to timeout...')
     await client.destroy()

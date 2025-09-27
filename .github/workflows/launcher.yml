@@ -1,9 +1,8 @@
 name: Launcher
 on:
   workflow_run:
-    workflows: ["Deploy"]
-    types:
-      - completed
+    workflows: [Deploy]
+    types: [completed]
   schedule:
     - cron: 0 */6 * * *
 
@@ -11,10 +10,39 @@ concurrency:
   group: launcher
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
-  job:
-    name: My Job
+  trigger-wbt:
     runs-on: ubuntu-latest
     steps:
-      - name: Loading
-        run: sleep 1
+      - name: Check
+        id: check
+        run: |
+          runs=$(curl -s -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/wbt.yml/runs?status=in_progress")
+
+          queued=$(curl -s -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/wbt.yml/runs?status=queued")
+
+          count_in_progress=$(echo "$runs" | jq '.total_count')
+          count_queued=$(echo "$queued" | jq '.total_count')
+
+          if [ "$count_in_progress" -eq 0 ] && [ "$count_queued" -eq 0 ]; then
+            echo "free=true" >> $GITHUB_OUTPUT
+          else
+            echo "free=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger
+        if: steps.check.outputs.free == 'true'
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/wbt.yml/dispatches \
+            -d '{"ref":"main"}'
