@@ -1,0 +1,47 @@
+name: TTYD
+on:
+  workflow_dispatch:
+  # push:
+
+concurrency:
+  group: ttyd
+  cancel-in-progress: true
+
+jobs:
+  job:
+    name: My job
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update;sudo apt install ttyd
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - run: curl -sSL https://alessandromrc.github.io/fastfetch-installer/installer.sh | sudo bash
+
+      - uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: ${{ secrets.RCLONE_CONFIG }}
+
+      - name: Sync
+        run: bash ./.github/workflows/sync.sh pull
+
+      - uses: AnimMouse/setup-ffmpeg@v1
+        with:
+          version: master
+        
+      - uses: AnimMouse/setup-yt-dlp@v3
+
+      - uses: browser-actions/setup-chrome@v2
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Environment
+        run: |
+          echo "${{ secrets.ENV }}" | base64 -d > .env
+
+      - uses: AnimMouse/setup-cloudflared@v2
+
+      - run: nohup ttyd -W -p 8000 bash > ttyd.log 2>&1 &
+      - run: curl http://127.0.0.1:8000; cloudflared tunnel --url http://127.0.0.1:8000
