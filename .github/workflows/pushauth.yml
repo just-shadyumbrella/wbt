@@ -1,7 +1,6 @@
-name: Push Auth Dev
+name: Push Auth
 on:
   workflow_dispatch:
-  #push:
 
 concurrency:
   group: wbt
