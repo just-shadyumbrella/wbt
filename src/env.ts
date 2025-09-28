@@ -1,8 +1,11 @@
 import { config } from 'dotenv'
 import puppeteer from 'puppeteer-extra'
+import { chromePath } from './util/misc.js'
 
 console.time('Latest user agent gathered')
-const browser = await puppeteer.default.launch()
+const browser = await puppeteer.default.launch({
+  executablePath: chromePath() || puppeteer.default.executablePath(),
+})
 const userAgent = await browser.userAgent()
 await browser.close()
 console.timeEnd('Latest user agent gathered')

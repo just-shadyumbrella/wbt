@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import _ from 'lodash'
 import { PREFIX } from '../env.js'
 import { logger, LoggerType } from './logger.js'
 
@@ -96,7 +97,6 @@ export async function sleep(ms: number) {
 }
 
 /**
- * @deprecated
  * @returns Guessed Google Chrome installation path.
  */
 export function chromePath() {
@@ -130,4 +130,8 @@ export function chromePath() {
   } catch (e) {
     console.error(e)
   }
+}
+
+export function reverseString(string: string) {
+  return _.reverse(string.split('')).join('')
 }

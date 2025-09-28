@@ -6,7 +6,6 @@ import ky from 'ky'
 import WAWebJS from 'whatsapp-web.js'
 import { create, all } from 'mathjs'
 import { fileTypeFromBuffer } from 'file-type'
-import { IntRange } from 'type-fest'
 import { client } from '../index.js'
 import { fastfetch, YTdlp } from './cli-wrapper.js'
 import { PREFIX } from './env.js'
@@ -28,13 +27,14 @@ import {
 } from './util/wa.js'
 import { mathVM } from './util/vm.js'
 import { bratGenerator, brotGenerator } from './api/pupscrap.js'
-import { ParsedCommand, sleep } from './util/misc.js'
-import { photoTool, photoToolCommand, uploadPhoto } from './api/photo.js'
+import { ParsedCommand, reverseString, sleep } from './util/misc.js'
+import { photoTool, photoToolCommand, PhotoToolOptions, uploadPhoto } from './api/photo.js'
 import { WPW, WPWFilters } from './api/wpw.js'
 import _ from 'lodash'
 import { EZRemove } from './api/ezremove.js'
 import { PXC } from './api/pxc.js'
 import { REJobType, Remaker } from './api/remaker.js'
+import { Waifu2x, model, denoise, upscaling, tile, tta, alpha, Waifu2xOptions } from './api/waifu2x.js'
 
 const math = create(all, { number: 'BigNumber', precision: 64 })
 const WBT = {
@@ -343,14 +343,14 @@ const WBT = {
         const tool = (parsed.positional[0] || '') as (typeof photoToolCommand)[number]
         if (photoToolCommand.includes(tool) && mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          const doc = flags['-doc'] as boolean
-          const c = Number(flags['-c']) as IntRange<0, 9>
-          const q = Number(flags['-q']) as IntRange<0, 100>
-          const u = Number(flags['-u']) as IntRange<0, 4>
+          const doc = Boolean(flags['-doc'])
+          const compressLevel = Number(flags['-c']) as NonNullable<PhotoToolOptions['compressLevel']>
+          const imageQuality = Number(flags['-q']) as NonNullable<PhotoToolOptions['imageQuality']>
+          const upscalingLevel = Number(flags['-u']) as NonNullable<PhotoToolOptions['upscalingLevel']>
           const result = await photoTool(message, Buffer.from(media.data, 'base64'), tool, {
-            compressLevel: !isNaN(c) ? c : undefined,
-            imageQuality: !isNaN(q) ? q : undefined,
-            upscalingLevel: !isNaN(q) ? u : undefined,
+            compressLevel,
+            imageQuality,
+            upscalingLevel,
           })
           if (result) {
             const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
@@ -396,7 +396,7 @@ const WBT = {
         ) as (typeof REJobType)[number]
         if (REJobType.includes(type) && mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          const doc = flags['-doc'] as boolean
+          const doc = Boolean(flags['-doc'])
           const result = await Remaker(message, Buffer.from(media.data, 'base64'), type)
           if (result) {
             const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
@@ -435,7 +435,7 @@ const WBT = {
         }
         if (mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          const doc = flags['-doc'] as boolean
+          const doc = Boolean(flags['-doc'])
           const result = await EZRemove(message, Buffer.from(media.data, 'base64'))
           if (result) {
             const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
@@ -473,7 +473,7 @@ const WBT = {
         }
         if (mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          const doc = flags['-doc'] as boolean
+          const doc = Boolean(flags['-doc'])
           const result = await PXC(message, Buffer.from(media.data, 'base64'))
           if (result) {
             const upload = await WAWebJS.MessageMedia.fromUrl(result.href)
@@ -488,6 +488,80 @@ const WBT = {
               [`[IMAGE] ↩️? ${command} [-doc]`],
               `*📝 Argumen*
 
+\`-doc\` Kirim sebagai dokumen.
+
+🧪 Dapat dikirim via dokumen.`
+            )
+          )
+        }
+      },
+    },
+    waifu2x: {
+      description: 'Upscale gambar alternatif lokal, cocok buat anime atau foto. 🚧',
+      handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
+        const { command, flags } = parsed
+        let mediaMsg: WAWebJS.Message | null = null
+        if (message.hasMedia) {
+          mediaMsg = message
+        } else if (message.hasQuotedMsg) {
+          const msgQ = await message.getQuotedMessage()
+          if (msgQ.hasMedia) {
+            mediaMsg = msgQ
+          }
+        }
+        if (mediaMsg) {
+          const media = await mediaMsg.downloadMedia()
+          const m = Number(flags['-m']) as typeof model.length
+          const d = Number(flags['-d']) as NonNullable<Waifu2xOptions['denoise']>
+          const u = Number(flags['-u']) as NonNullable<Waifu2xOptions['upscaling']>
+          const ti = Number(flags['tile']) as NonNullable<Waifu2xOptions['tile']>
+          const shuffle = Boolean(flags['shuffle'])
+          const tt = Number(flags['-tta']) as NonNullable<Waifu2xOptions['tta']>
+          const al = Number(flags['-alpha']) as NonNullable<Waifu2xOptions['alpha']>
+          const doc = Boolean(flags['-doc'])
+          const filePath = path.join(tmpDir(), `${crypto.randomUUID()}${path.extname(media.filename || 'IMG.jpg')}`)
+          fs.writeFileSync(filePath, Buffer.from(media.data, 'base64'))
+          const result = await Waifu2x(client.pupBrowser, filePath, {
+            model: model[m - 1],
+            denoise: denoise.includes(d) ? d : undefined,
+            upscaling: upscaling.includes(u) ? u : undefined,
+            tile: tile.includes(ti) ? ti : undefined,
+            shuffle,
+            tta: tta.includes(tt) ? tt : undefined,
+            alpha: alpha.includes(al) ? al : undefined,
+          })
+          if (result) {
+            const upload = new WAWebJS.MessageMedia('image/png', result.toString('base64'))
+            return await message.reply(upload, undefined, {
+              sendMediaAsDocument: doc,
+              sendMediaAsHd: !doc,
+            })
+          }
+        } else {
+          return await message.reply(
+            useHelp(
+              [
+                `[IMAGE] ↩️? ${command} [-m 1-${model.length}] [-d ${denoise.join(' | ')}] [-u ${upscaling.join(
+                  ' | '
+                )}] [-tile ${tile.join(' | ')}] [-shuffle] [-tta ${tta.join(' | ')}] [-alpha ${alpha.join(
+                  ' | '
+                )}] [-doc]`,
+              ],
+              `*📝 Argumen*
+
+\`-m\` Pilihan model:\n${(() => {
+                let sort = ''
+                for (let i = 0; i < model.length; i++) {
+                  sort += `${i + 1}. ${model[i]}\n`
+                }
+                return sort
+              })()}
+\`-d\` Level denoise.
+\`-u\` Level upscaling.
+\`-tile\` Banyak tile.
+\`-shuffle\` Process per tile secara acak.
+\`-tta\` Ensemble TTA.
+\`-alpha\` Channel alpha (transparansi).
 \`-doc\` Kirim sebagai dokumen.
 
 🧪 Dapat dikirim via dokumen.`
@@ -512,7 +586,7 @@ const WBT = {
         const filter = (parsed.positional[0] || '') as (typeof WPWFilters)[number]
         if (WPWFilters.includes(filter) && mediaMsg) {
           const media = await mediaMsg.downloadMedia()
-          const doc = flags['-doc'] as boolean
+          const doc = Boolean(flags['-doc'])
           const result = await WPW(message, Buffer.from(media.data, 'base64'), filter)
           if (result) {
             const fileType = await fileTypeFromBuffer(result)
@@ -653,8 +727,8 @@ const WBT = {
           }
         }
         if (media) {
-          const doc = parsed.flags['-doc'] as boolean
-          const link = parsed.flags['-link'] as boolean
+          const doc = Boolean(parsed.flags['-doc'])
+          const link = Boolean(parsed.flags['-link'])
           const upload = link
             ? await (async () => {
                 const url = await uploadPhoto(Buffer.from(media.data, 'base64'), undefined, message)
@@ -829,7 +903,7 @@ const WBT = {
       },
     },
     */
-    gnoloc: {
+    [reverseString('colong')]: {
       description: '?',
       handler: async (message: WAWebJS.Message, parsed: ParsedCommand) => {
         const { positional, flags } = parsed
@@ -839,11 +913,13 @@ const WBT = {
           if (flags['-link']) {
             return await message.reply(`🔗 ${await contact.getProfilePicUrl()}`)
           } else {
+            const doc = Boolean(flags['-doc'])
             return await message.reply(
               await WAWebJS.MessageMedia.fromUrl(await contact.getProfilePicUrl()),
               undefined,
               {
                 sendMediaAsHd: true,
+                sendMediaAsDocument: doc,
               }
             )
           }

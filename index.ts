@@ -8,7 +8,7 @@ import { PHONE_NUMBER, PREFIX, USER_AGENT } from './src/env.js'
 import commands, { builtInMentions } from './src/commands.js'
 import { logger, LoggerType } from './src/util/logger.js'
 import { extractMentions, readMore, getParticipantsId, filterMyselfFromParticipants } from './src/util/wa.js'
-import { parseArgumentsStructured } from './src/util/misc.js'
+import { chromePath, parseArgumentsStructured } from './src/util/misc.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -42,7 +42,7 @@ export const client = new WAWebJS.Client({
   userAgent: USER_AGENT,
   puppeteer: {
     headless: arg === 'debug' ? false : true,
-    executablePath: puppeteer.default.executablePath(),
+    executablePath: chromePath() || puppeteer.default.executablePath(),
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     timeout: 0, // If browser startup slower
   },
