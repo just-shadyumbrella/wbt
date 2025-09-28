@@ -62,15 +62,17 @@ export async function uploadPhoto(image: Buffer, folder = 'uploads', msg: Messag
   }
 }
 
-export async function photoTool(
-  msg: Message,
-  image: string | Buffer | URL,
-  tool: (typeof photoToolCommand)[number],
-  options?: {
+export type PhotoToolOptions = {
     imageQuality?: IntRange<0, 101>
     compressLevel?: IntRange<0, 10>
     upscalingLevel?: IntRange<0, 5>
   }
+
+export async function photoTool(
+  msg: Message,
+  image: string | Buffer | URL,
+  tool: (typeof photoToolCommand)[number],
+  options?: PhotoToolOptions
 ) {
   const img = await (async () => {
     if (image instanceof URL) {
