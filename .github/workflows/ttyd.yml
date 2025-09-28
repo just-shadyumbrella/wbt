@@ -1,17 +1,18 @@
-name: Deploy Dev
+name: TTYD
 on:
   workflow_dispatch:
-  push:
+  # push:
 
 concurrency:
-  group: wbt_dev
+  group: ttyd
   cancel-in-progress: true
 
 jobs:
   job:
-    name: My Job
+    name: My job
     runs-on: ubuntu-latest
     steps:
+      - run: sudo apt-get update;sudo apt install ttyd
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -40,5 +41,7 @@ jobs:
         run: |
           echo "${{ secrets.ENV_DEV }}" | base64 -d > .env
 
-      - name: Bun
-        run: bun i --production;bun run .
+      - uses: AnimMouse/setup-cloudflared@v2
+
+      - run: nohup ttyd -W -p 8000 bash > ttyd.log 2>&1 &
+      - run: curl http://127.0.0.1:8000; cloudflared tunnel --url http://127.0.0.1:8000
