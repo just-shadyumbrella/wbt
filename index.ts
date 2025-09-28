@@ -4,11 +4,11 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
 import WAWebJS from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
-import { PHONE_NUMBER, PREFIX, USER_AGENT } from './src/env.js'
+import { CHROME_PATH, PHONE_NUMBER, PREFIX, USER_AGENT } from './src/env.js'
 import commands, { builtInMentions } from './src/commands.js'
 import { logger, LoggerType } from './src/util/logger.js'
 import { extractMentions, readMore, getParticipantsId, filterMyselfFromParticipants } from './src/util/wa.js'
-import { chromePath, parseArgumentsStructured } from './src/util/misc.js'
+import { parseArgumentsStructured } from './src/util/misc.js'
 
 try {
   fs.rmSync('.wwebjs_cache', { recursive: true, force: true })
@@ -17,11 +17,12 @@ try {
 }
 
 const name = 'index',
-  fn = 'client'
-const arg = process.argv[2]
-if (arg === 'debug')
+  fn = 'client',
+  debug = process.argv.includes('debug'),
+  pushauth = process.argv.includes('pushauth')
+if (debug)
   logger(LoggerType.WARN, { name, fn: 'debug' }, 'Debug mode enabled. Unhide browser window and skip some prefetch.')
-if (arg === 'pushauth')
+if (pushauth)
   logger(LoggerType.WARN, { name, fn: 'pushauth' }, 'Push browser profile to cloud, automatically exit on ready.')
 
 puppeteer.default.use(StealthPlugin())
@@ -41,8 +42,8 @@ export const client = new WAWebJS.Client({
   },
   userAgent: USER_AGENT,
   puppeteer: {
-    headless: arg === 'debug' ? false : true,
-    executablePath: chromePath() || puppeteer.default.executablePath(),
+    headless: debug ? false : true,
+    executablePath: CHROME_PATH,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     timeout: 0, // If browser startup slower
   },
@@ -76,7 +77,7 @@ client.on('ready', async () => {
   await client.setAutoDownloadVideos(false)
   await client.setBackgroundSync(true)
   logger(LoggerType.INFO, { name, fn, context: 'ready' }, `Client ready.`)
-  if (arg === 'pushauth') {
+  if (pushauth) {
     logger(LoggerType.WARN, { name, fn, context: 'pushauth' }, 'Awaiting client sync to be done...')
     setTimeout(async () => {
       logger(LoggerType.WARN, { name, fn: 'setTimeout', context: 'pushauth' }, 'Exiting...')
