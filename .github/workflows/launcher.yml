@@ -18,6 +18,7 @@ jobs:
   trigger-wbt:
     runs-on: ubuntu-latest
     steps:
+      - run: sleep 10
       - name: Check
         id: check
         run: |
