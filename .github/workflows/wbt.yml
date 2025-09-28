@@ -1,7 +1,10 @@
 name: Deploy Dev
 on:
-  workflow_dispatch:
   push:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Push Auth Dev"]
+    types: [completed]
 
 concurrency:
   group: wbt_dev
