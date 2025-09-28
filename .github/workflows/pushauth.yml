@@ -19,7 +19,7 @@ jobs:
         with:
           rclone_config: ${{ secrets.RCLONE_CONFIG }}
 
-      # - uses: browser-actions/setup-chrome@v2
+      - uses: browser-actions/setup-chrome@v2
 
       - uses: oven-sh/setup-bun@v2
         with:
