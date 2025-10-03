@@ -108,9 +108,7 @@ client.on('message_create', async (message) => {
   const parsed = parseArgumentsStructured(message.body, matcher)
   try {
     if (parsed) {
-      const command = parsed.command.replace(new RegExp(`(${matcher.map(e => {
-        e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      }).join('|')})(?=\\S)`), '')
+      const command = parsed.command.slice(1)
       const { positional } = parsed
       const chat = await message.getChat()
       await chat.sendStateTyping()
