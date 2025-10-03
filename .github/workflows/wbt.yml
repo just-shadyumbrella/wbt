@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  job:
+  m:
     name: Morning
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +32,7 @@ jobs:
       - uses: AnimMouse/setup-ffmpeg@v1
         with:
           version: master
-        
+
       - uses: AnimMouse/setup-yt-dlp@v3
 
       # - uses: browser-actions/setup-chrome@v2
@@ -47,8 +47,9 @@ jobs:
 
       - name: Bun
         run: bun i --production;bun run .
-  jo:
+  a:
     name: Afternoon
+    needs: m
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -66,7 +67,7 @@ jobs:
       - uses: AnimMouse/setup-ffmpeg@v1
         with:
           version: master
-        
+
       - uses: AnimMouse/setup-yt-dlp@v3
 
       # - uses: browser-actions/setup-chrome@v2
@@ -81,8 +82,9 @@ jobs:
 
       - name: Bun
         run: bun i --production;bun run .
-  j:
+  e:
     name: Evening
+    needs: a
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -100,7 +102,7 @@ jobs:
       - uses: AnimMouse/setup-ffmpeg@v1
         with:
           version: master
-        
+
       - uses: AnimMouse/setup-yt-dlp@v3
 
       # - uses: browser-actions/setup-chrome@v2
@@ -115,8 +117,9 @@ jobs:
 
       - name: Bun
         run: bun i --production;bun run .
-  b:
+  n:
     name: Midnight
+    needs: e
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -134,7 +137,7 @@ jobs:
       - uses: AnimMouse/setup-ffmpeg@v1
         with:
           version: master
-        
+
       - uses: AnimMouse/setup-yt-dlp@v3
 
       # - uses: browser-actions/setup-chrome@v2
