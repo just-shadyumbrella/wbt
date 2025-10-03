@@ -104,13 +104,13 @@ client.on('code', (code) => {
 client.on('message_create', async (message) => {
   const now = Date.now()
   let context = ''
-  const matcher = [PREFIX].map(e => {
-    e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  })
+  const matcher = [PREFIX]
   const parsed = parseArgumentsStructured(message.body, matcher)
   try {
     if (parsed) {
-      const command = parsed.command.replace(new RegExp(`(${matcher.join('|')})(?=\\S)`), '')
+      const command = parsed.command.replace(new RegExp(`(${matcher.map(e => {
+        e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      }).join('|')})(?=\\S)`), '')
       const { positional } = parsed
       const chat = await message.getChat()
       await chat.sendStateTyping()
