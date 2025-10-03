@@ -104,7 +104,9 @@ client.on('code', (code) => {
 client.on('message_create', async (message) => {
   const now = Date.now()
   let context = ''
-  const matcher = [PREFIX]
+  const matcher = [PREFIX].map(e => {
+    e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  })
   const parsed = parseArgumentsStructured(message.body, matcher)
   try {
     if (parsed) {
