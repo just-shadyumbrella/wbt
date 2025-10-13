@@ -28,6 +28,7 @@ if (pushauth)
 puppeteer.default.use(StealthPlugin())
 puppeteer.default.use(
   AdblockerPlugin.default({
+    blockTrackersAndAnnoyances: true,
     blockTrackers: true,
   })
 )
@@ -36,10 +37,12 @@ export const client = new WAWebJS.Client({
   authStrategy: new WAWebJS.LocalAuth({
     dataPath: './tokens',
   }),
-  pairWithPhoneNumber: {
-    phoneNumber: PHONE_NUMBER || '',
-    showNotification: true,
-  },
+  pairWithPhoneNumber: PHONE_NUMBER
+    ? {
+        phoneNumber: PHONE_NUMBER || '',
+        showNotification: true,
+      }
+    : undefined,
   userAgent: USER_AGENT,
   puppeteer: {
     headless: debug ? false : true,
@@ -107,7 +110,7 @@ client.on('message_create', async (message) => {
   const parsed = parseArgumentsStructured(message.body, matcher)
   try {
     if (parsed) {
-      const command = parsed.command.replace(new RegExp(`(${matcher.join('|')})(?=\\S)`), '')
+      const command = parsed.command.replace(new RegExp(`(${matcher.map((e) => `\\${e}`).join('|')})(?=\\S)`), '')
       const { positional } = parsed
       const chat = await message.getChat()
       await chat.sendStateTyping()
