@@ -5,6 +5,8 @@ on:
   workflow_run:
     workflows: ["Push Auth"]
     types: [completed]
+  schedule:
+    - cron: "0 20 * * *"
 
 concurrency:
   group: wbt
